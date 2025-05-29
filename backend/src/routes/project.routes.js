@@ -24,4 +24,7 @@ router.delete("/:id/members/:memberId", auth, ProjectController.removeMember);
 // Get project progress
 router.get("/:id/progress", auth, ProjectController.getProjectProgress);
 
+// Delete project
+router.delete("/:id", auth, ProjectController.deleteProject);
+
 module.exports = router;

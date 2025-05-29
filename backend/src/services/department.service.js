@@ -26,7 +26,7 @@ class DepartmentService {
 
     // Update department
     static async updateDepartment(id, updates) {
-        const allowedUpdates = ["name", "description", "isActive"];
+        const allowedUpdates = ["name", "description", "manager"];
         const isValidOperation = Object.keys(updates).every((update) =>
             allowedUpdates.includes(update)
         );
@@ -45,18 +45,12 @@ class DepartmentService {
 
     // Delete department
     static async deleteDepartment(id) {
-        const department = await Department.findById(id);
-        if (!department) {
-            return null;
-        }
-
         // Check if department has members
         const memberCount = await User.countDocuments({ department: id });
         if (memberCount > 0) {
             throw new Error("Cannot delete department with existing members");
         }
-
-        await department.remove();
+        const department = await Department.findByIdAndDelete(id);
         return department;
     }
 

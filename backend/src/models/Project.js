@@ -66,6 +66,11 @@ const projectSchema = new mongoose.Schema(
                 },
             },
         ],
+        manager: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: false,
+        },
     },
     {
         timestamps: true,

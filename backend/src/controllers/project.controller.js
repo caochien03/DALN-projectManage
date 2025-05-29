@@ -43,6 +43,7 @@ class ProjectController {
             "progress",
             "startDate",
             "endDate",
+            "manager",
         ];
         const isValidOperation = updates.every((update) =>
             allowedUpdates.includes(update)
@@ -105,6 +106,18 @@ class ProjectController {
                 return res.status(404).json({ error: "Project not found" });
             }
             res.json({ progress });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    static async deleteProject(req, res) {
+        try {
+            const project = await ProjectService.deleteProject(req.params.id);
+            if (!project) {
+                return res.status(404).json({ error: "Project not found" });
+            }
+            res.json({ message: "Project deleted successfully" });
         } catch (error) {
             res.status(500).json({ error: error.message });
         }

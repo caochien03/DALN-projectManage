@@ -30,8 +30,8 @@ const userSchema = new mongoose.Schema(
         },
         department: {
             type: mongoose.Schema.Types.ObjectId,
-            type: String,
-            trim: true,
+            ref: "Department",
+            required: true,
         },
         position: {
             type: String,

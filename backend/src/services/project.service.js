@@ -71,6 +71,10 @@ class ProjectService {
         ).length;
         return totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
     }
+
+    static async deleteProject(id) {
+        return Project.findByIdAndDelete(id);
+    }
 }
 
 module.exports = ProjectService;

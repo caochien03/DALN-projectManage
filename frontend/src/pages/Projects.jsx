@@ -1,456 +1,460 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import {
-    Grid,
-    TextField,
-    MenuItem,
-    Box,
-    CircularProgress,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    IconButton,
-    Typography,
-} from "@mui/material";
-import { Close as CloseIcon } from "@mui/icons-material";
-import PageHeader from "../components/PageHeader";
-import DataTable from "../components/DataTable";
-import FormDialog from "../components/FormDialog";
-import ProjectKanban from "../components/ProjectKanban";
-import {
-    getProjects,
+    getAllProjects,
     createProject,
     updateProject,
     deleteProject,
 } from "../services/project";
-import {
-    getTasksByProject,
-    createTask,
-    updateTask,
-    deleteTask,
-} from "../services/task";
+import { getAllDepartments } from "../services/department";
+import { getAllUsers } from "../services/user";
+import Modal from "../components/Modal";
 
-const projectColumns = [
-    { field: "name", headerName: "Name" },
-    { field: "description", headerName: "Description" },
-    { field: "status", headerName: "Status", type: "status" },
-    { field: "progress", headerName: "Progress" },
-    { field: "startDate", headerName: "Start Date" },
-    { field: "endDate", headerName: "End Date" },
-];
+const statuses = ["TODO", "IN_PROGRESS", "REVIEW", "DONE"];
 
-const initialProjectData = {
-    name: "",
-    description: "",
-    status: "open",
-    startDate: "",
-    endDate: "",
-    members: [],
-};
-
-const initialTaskData = {
-    title: "",
-    description: "",
-    status: "todo",
-    priority: "medium",
-    startDate: "",
-    dueDate: "",
-    assignedTo: "",
-};
-
-function Projects() {
-    const [projectDialogOpen, setProjectDialogOpen] = useState(false);
-    const [taskDialogOpen, setTaskDialogOpen] = useState(false);
-    const [selectedProject, setSelectedProject] = useState(null);
-    const [selectedTask, setSelectedTask] = useState(null);
-    const [projectFormData, setProjectFormData] = useState(initialProjectData);
-    const [taskFormData, setTaskFormData] = useState(initialTaskData);
-    const queryClient = useQueryClient();
-
-    const { data: projects, isLoading: projectsLoading } = useQuery({
-        queryKey: ["projects"],
-        queryFn: getProjects,
+export default function Projects() {
+    const [projects, setProjects] = useState([]);
+    const [departments, setDepartments] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [showForm, setShowForm] = useState(false);
+    const [editingProject, setEditingProject] = useState(null);
+    const [formData, setFormData] = useState({
+        name: "",
+        description: "",
+        status: "open",
+        progress: 0,
+        startDate: "",
+        endDate: "",
+        departments: [],
+        members: [],
+        milestones: [],
     });
 
-    const { data: projectTasks, isLoading: tasksLoading } = useQuery({
-        queryKey: ["projectTasks", selectedProject?._id],
-        queryFn: () => getTasksByProject(selectedProject?._id),
-        enabled: !!selectedProject,
-    });
+    useEffect(() => {
+        fetchProjects();
+        fetchDepartments();
+        fetchUsers();
+    }, []);
 
-    const createProjectMutation = useMutation({
-        mutationFn: createProject,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["projects"] });
-            handleProjectDialogClose();
-        },
-    });
+    const fetchProjects = async () => {
+        setIsLoading(true);
+        try {
+            const data = await getAllProjects();
+            setProjects(data);
+        } catch {
+            setError("Failed to fetch projects");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-    const updateProjectMutation = useMutation({
-        mutationFn: updateProject,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["projects"] });
-            handleProjectDialogClose();
-        },
-    });
+    const fetchDepartments = async () => {
+        try {
+            const data = await getAllDepartments();
+            setDepartments(data);
+        } catch {
+            setError("Failed to fetch departments");
+        }
+    };
 
-    const deleteProjectMutation = useMutation({
-        mutationFn: deleteProject,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["projects"] });
-        },
-    });
+    const fetchUsers = async () => {
+        try {
+            const data = await getAllUsers();
+            setUsers(data);
+        } catch {
+            setError("Failed to fetch users");
+        }
+    };
 
-    const createTaskMutation = useMutation({
-        mutationFn: createTask,
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ["projectTasks", selectedProject?._id],
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        try {
+            if (editingProject) {
+                await updateProject(editingProject._id, formData);
+            } else {
+                await createProject(formData);
+            }
+            setShowForm(false);
+            setEditingProject(null);
+            setFormData({
+                name: "",
+                description: "",
+                status: "open",
+                progress: 0,
+                startDate: "",
+                endDate: "",
+                departments: [],
+                members: [],
+                milestones: [],
             });
-            handleTaskDialogClose();
-        },
-    });
-
-    const updateTaskMutation = useMutation({
-        mutationFn: updateTask,
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ["projectTasks", selectedProject?._id],
-            });
-            handleTaskDialogClose();
-        },
-    });
-
-    const deleteTaskMutation = useMutation({
-        mutationFn: deleteTask,
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ["projectTasks", selectedProject?._id],
-            });
-        },
-    });
-
-    const handleProjectDialogOpen = () => {
-        setProjectDialogOpen(true);
+            fetchProjects();
+        } catch (error) {
+            setError(error.response?.data?.message || "Failed to save project");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleProjectDialogClose = () => {
-        setProjectDialogOpen(false);
-        setSelectedProject(null);
-        setProjectFormData(initialProjectData);
-    };
-
-    const handleTaskDialogOpen = () => {
-        setTaskDialogOpen(true);
-    };
-
-    const handleTaskDialogClose = () => {
-        setTaskDialogOpen(false);
-        setSelectedTask(null);
-        setTaskFormData(initialTaskData);
-    };
-
-    const handleProjectEdit = (project) => {
-        setSelectedProject(project);
-        setProjectFormData({
-            ...project,
-            startDate: new Date(project.startDate).toISOString().split("T")[0],
-            endDate: new Date(project.endDate).toISOString().split("T")[0],
+    const handleEdit = (project) => {
+        setEditingProject(project);
+        setFormData({
+            name: project.name,
+            description: project.description,
+            status: project.status,
+            progress: project.progress,
+            startDate: project.startDate,
+            endDate: project.endDate,
+            departments: project.departments,
+            members: project.members,
+            milestones: project.milestones,
         });
-        setProjectDialogOpen(true);
+        setShowForm(true);
     };
 
-    const handleProjectDelete = (project) => {
+    const handleDelete = async (projectId) => {
         if (window.confirm("Are you sure you want to delete this project?")) {
-            deleteProjectMutation.mutate(project._id);
+            try {
+                await deleteProject(projectId);
+                fetchProjects();
+            } catch {
+                setError("Failed to delete project");
+            }
         }
     };
 
-    const handleProjectSubmit = (e) => {
-        e.preventDefault();
-        if (selectedProject) {
-            updateProjectMutation.mutate({
-                id: selectedProject._id,
-                data: projectFormData,
-            });
-        } else {
-            createProjectMutation.mutate(projectFormData);
-        }
+    const getProjectsByStatus = (status) => {
+        return projects.filter((project) => project.status === status);
     };
-
-    const handleTaskEdit = (task) => {
-        setSelectedTask(task);
-        setTaskFormData({
-            ...task,
-            startDate: new Date(task.startDate).toISOString().split("T")[0],
-            dueDate: new Date(task.dueDate).toISOString().split("T")[0],
-        });
-        setTaskDialogOpen(true);
-    };
-
-    const handleTaskDelete = (task) => {
-        if (window.confirm("Are you sure you want to delete this task?")) {
-            deleteTaskMutation.mutate(task._id);
-        }
-    };
-
-    const handleTaskSubmit = (e) => {
-        e.preventDefault();
-        const taskData = {
-            ...taskFormData,
-            project: selectedProject._id,
-        };
-        if (selectedTask) {
-            updateTaskMutation.mutate({ id: selectedTask._id, data: taskData });
-        } else {
-            createTaskMutation.mutate(taskData);
-        }
-    };
-
-    const handleTaskStatusChange = (taskId, newStatus) => {
-        updateTaskMutation.mutate({ id: taskId, data: { status: newStatus } });
-    };
-
-    const handleProjectChange = (e) => {
-        setProjectFormData({
-            ...projectFormData,
-            [e.target.name]: e.target.value,
-        });
-    };
-
-    const handleTaskChange = (e) => {
-        setTaskFormData({
-            ...taskFormData,
-            [e.target.name]: e.target.value,
-        });
-    };
-
-    if (projectsLoading) {
-        return (
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-                <CircularProgress />
-            </Box>
-        );
-    }
 
     return (
-        <Box sx={{ flexGrow: 1, p: 3 }}>
-            <PageHeader title="Projects" onAdd={handleProjectDialogOpen} />
-            <DataTable
-                columns={projectColumns}
-                data={projects}
-                onEdit={handleProjectEdit}
-                onDelete={handleProjectDelete}
-                onRowClick={(project) => setSelectedProject(project)}
-            />
-
-            <Dialog
-                open={!!selectedProject}
-                onClose={() => setSelectedProject(null)}
-                maxWidth="xl"
-                fullWidth
-            >
-                <DialogTitle>
-                    <Box
-                        sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="sm:flex sm:items-center">
+                <div className="sm:flex-auto">
+                    <h1 className="text-2xl font-semibold text-gray-900">
+                        Projects
+                    </h1>
+                    <p className="mt-2 text-sm text-gray-700">
+                        A list of all projects in your organization
+                    </p>
+                </div>
+                <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setEditingProject(null);
+                            setFormData({
+                                name: "",
+                                description: "",
+                                status: "open",
+                                progress: 0,
+                                startDate: "",
+                                endDate: "",
+                                departments: [],
+                                members: [],
+                                milestones: [],
+                            });
+                            setShowForm(true);
                         }}
+                        className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
                     >
-                        <Typography variant="h6">
-                            {selectedProject?.name} - Tasks
-                        </Typography>
-                        <Box>
-                            <IconButton
-                                onClick={handleTaskDialogOpen}
-                                color="primary"
-                            >
-                                Add Task
-                            </IconButton>
-                            <IconButton
-                                onClick={() => setSelectedProject(null)}
-                            >
-                                <CloseIcon />
-                            </IconButton>
-                        </Box>
-                    </Box>
-                </DialogTitle>
-                <DialogContent>
-                    {tasksLoading ? (
-                        <Box
-                            sx={{
-                                display: "flex",
-                                justifyContent: "center",
-                                mt: 4,
-                            }}
-                        >
-                            <CircularProgress />
-                        </Box>
-                    ) : (
-                        <ProjectKanban
-                            tasks={projectTasks || []}
-                            onTaskEdit={handleTaskEdit}
-                            onTaskDelete={handleTaskDelete}
-                            onTaskStatusChange={handleTaskStatusChange}
-                        />
-                    )}
-                </DialogContent>
-            </Dialog>
+                        <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+                        Add project
+                    </button>
+                </div>
+            </div>
 
-            <FormDialog
-                open={projectDialogOpen}
-                onClose={handleProjectDialogClose}
-                title={selectedProject ? "Edit Project" : "Add Project"}
-                onSubmit={handleProjectSubmit}
+            {error && (
+                <div
+                    className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+                    role="alert"
+                >
+                    <span className="block sm:inline">{error}</span>
+                </div>
+            )}
+
+            <Modal
+                isOpen={showForm}
+                onClose={() => setShowForm(false)}
+                title={editingProject ? "Edit Project" : "Add New Project"}
             >
-                <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                        <TextField
+                <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+                    <div>
+                        <label
+                            htmlFor="name"
+                            className="block text-sm font-medium text-gray-700"
+                        >
+                            Name
+                        </label>
+                        <input
+                            type="text"
                             name="name"
-                            label="Name"
-                            fullWidth
+                            id="name"
+                            value={formData.name}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    name: e.target.value,
+                                })
+                            }
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                             required
-                            value={projectFormData.name}
-                            onChange={handleProjectChange}
                         />
-                    </Grid>
-                    <Grid item xs={12}>
-                        <TextField
-                            name="description"
-                            label="Description"
-                            fullWidth
-                            multiline
-                            rows={3}
-                            value={projectFormData.description}
-                            onChange={handleProjectChange}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <TextField
-                            name="status"
-                            label="Status"
-                            fullWidth
-                            select
-                            value={projectFormData.status}
-                            onChange={handleProjectChange}
-                        >
-                            <MenuItem value="open">Open</MenuItem>
-                            <MenuItem value="close">Close</MenuItem>
-                        </TextField>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <TextField
-                            name="startDate"
-                            label="Start Date"
-                            type="date"
-                            fullWidth
-                            required
-                            value={projectFormData.startDate}
-                            onChange={handleProjectChange}
-                            InputLabelProps={{ shrink: true }}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <TextField
-                            name="endDate"
-                            label="End Date"
-                            type="date"
-                            fullWidth
-                            required
-                            value={projectFormData.endDate}
-                            onChange={handleProjectChange}
-                            InputLabelProps={{ shrink: true }}
-                        />
-                    </Grid>
-                </Grid>
-            </FormDialog>
+                    </div>
 
-            <FormDialog
-                open={taskDialogOpen}
-                onClose={handleTaskDialogClose}
-                title={selectedTask ? "Edit Task" : "Add Task"}
-                onSubmit={handleTaskSubmit}
-            >
-                <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                        <TextField
-                            name="title"
-                            label="Title"
-                            fullWidth
-                            required
-                            value={taskFormData.title}
-                            onChange={handleTaskChange}
-                        />
-                    </Grid>
-                    <Grid item xs={12}>
-                        <TextField
+                    <div>
+                        <label
+                            htmlFor="description"
+                            className="block text-sm font-medium text-gray-700"
+                        >
+                            Description
+                        </label>
+                        <textarea
+                            id="description"
                             name="description"
-                            label="Description"
-                            fullWidth
-                            multiline
                             rows={3}
-                            value={taskFormData.description}
-                            onChange={handleTaskChange}
+                            value={formData.description}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    description: e.target.value,
+                                })
+                            }
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <TextField
+                    </div>
+
+                    <div>
+                        <label
+                            htmlFor="status"
+                            className="block text-sm font-medium text-gray-700"
+                        >
+                            Status
+                        </label>
+                        <select
+                            id="status"
                             name="status"
-                            label="Status"
-                            fullWidth
-                            select
-                            value={taskFormData.status}
-                            onChange={handleTaskChange}
+                            value={formData.status}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    status: e.target.value,
+                                })
+                            }
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         >
-                            <MenuItem value="todo">To Do</MenuItem>
-                            <MenuItem value="in_progress">In Progress</MenuItem>
-                            <MenuItem value="review">Review</MenuItem>
-                            <MenuItem value="completed">Completed</MenuItem>
-                        </TextField>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <TextField
-                            name="priority"
-                            label="Priority"
-                            fullWidth
-                            select
-                            value={taskFormData.priority}
-                            onChange={handleTaskChange}
+                            <option value="open">Open</option>
+                            <option value="close">Close</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label
+                            htmlFor="progress"
+                            className="block text-sm font-medium text-gray-700"
                         >
-                            <MenuItem value="low">Low</MenuItem>
-                            <MenuItem value="medium">Medium</MenuItem>
-                            <MenuItem value="high">High</MenuItem>
-                        </TextField>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <TextField
-                            name="startDate"
-                            label="Start Date"
-                            type="date"
-                            fullWidth
-                            required
-                            value={taskFormData.startDate}
-                            onChange={handleTaskChange}
-                            InputLabelProps={{ shrink: true }}
+                            Progress (%)
+                        </label>
+                        <input
+                            type="number"
+                            name="progress"
+                            id="progress"
+                            min="0"
+                            max="100"
+                            value={formData.progress}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    progress: parseInt(e.target.value),
+                                })
+                            }
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <TextField
-                            name="dueDate"
-                            label="Due Date"
-                            type="date"
-                            fullWidth
-                            required
-                            value={taskFormData.dueDate}
-                            onChange={handleTaskChange}
-                            InputLabelProps={{ shrink: true }}
-                        />
-                    </Grid>
-                </Grid>
-            </FormDialog>
-        </Box>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label
+                                htmlFor="startDate"
+                                className="block text-sm font-medium text-gray-700"
+                            >
+                                Start Date
+                            </label>
+                            <input
+                                type="date"
+                                name="startDate"
+                                id="startDate"
+                                value={formData.startDate}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        startDate: e.target.value,
+                                    })
+                                }
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label
+                                htmlFor="endDate"
+                                className="block text-sm font-medium text-gray-700"
+                            >
+                                End Date
+                            </label>
+                            <input
+                                type="date"
+                                name="endDate"
+                                id="endDate"
+                                value={formData.endDate}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        endDate: e.target.value,
+                                    })
+                                }
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label
+                            htmlFor="departments"
+                            className="block text-sm font-medium text-gray-700"
+                        >
+                            Departments
+                        </label>
+                        <select
+                            id="departments"
+                            name="departments"
+                            multiple
+                            value={formData.departments}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    departments: Array.from(
+                                        e.target.selectedOptions,
+                                        (option) => option.value
+                                    ),
+                                })
+                            }
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        >
+                            {departments.map((dept) => (
+                                <option key={dept._id} value={dept._id}>
+                                    {dept.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label
+                            htmlFor="members"
+                            className="block text-sm font-medium text-gray-700"
+                        >
+                            Members
+                        </label>
+                        <select
+                            id="members"
+                            name="members"
+                            multiple
+                            value={formData.members.map((m) => m.user)}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    members: Array.from(
+                                        e.target.selectedOptions,
+                                        (option) => ({
+                                            user: option.value,
+                                            role: "member",
+                                        })
+                                    ),
+                                })
+                            }
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        >
+                            {users.map((user) => (
+                                <option key={user._id} value={user._id}>
+                                    {user.name} ({user.position})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex justify-end space-x-3">
+                        <button
+                            type="button"
+                            onClick={() => setShowForm(false)}
+                            className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        >
+                            {isLoading
+                                ? "Saving..."
+                                : editingProject
+                                ? "Update"
+                                : "Create"}
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Kanban Board */}
+            <div className="mt-8">
+                <div className="grid grid-cols-4 gap-4">
+                    {statuses.map((status) => (
+                        <div key={status} className="bg-gray-50 rounded-lg p-4">
+                            <h3 className="text-lg font-medium text-gray-900 mb-4">
+                                {status.replace("_", " ")}
+                            </h3>
+                            <div className="space-y-4">
+                                {getProjectsByStatus(status).map((project) => (
+                                    <div
+                                        key={project.id}
+                                        className="bg-white p-4 rounded-lg shadow"
+                                    >
+                                        <h4 className="font-medium text-gray-900">
+                                            {project.name}
+                                        </h4>
+                                        <p className="text-sm text-gray-500 mt-1">
+                                            {project.description}
+                                        </p>
+                                        <div className="mt-4 flex justify-end space-x-2">
+                                            <button
+                                                onClick={() =>
+                                                    handleEdit(project)
+                                                }
+                                                className="text-indigo-600 hover:text-indigo-900"
+                                            >
+                                                <PencilIcon className="h-5 w-5" />
+                                            </button>
+                                            <button
+                                                onClick={() =>
+                                                    handleDelete(project.id)
+                                                }
+                                                className="text-red-600 hover:text-red-900"
+                                            >
+                                                <TrashIcon className="h-5 w-5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
     );
 }
-
-export default Projects;

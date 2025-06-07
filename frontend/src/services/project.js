@@ -1,43 +1,28 @@
-import axios from "../utils/axios";
+import axiosInstance from "../utils/axios";
 
-const API_URL = "/projects";
-
-export const getProjects = async () => {
-    const response = await axios.get(API_URL);
+// Get all projects
+export const getAllProjects = async () => {
+    const response = await axiosInstance.get("/api/projects");
     return response.data;
 };
 
-export const getProjectById = async (id) => {
-    const response = await axios.get(`${API_URL}/${id}`);
-    return response.data;
-};
-
+// Create project
 export const createProject = async (projectData) => {
-    const response = await axios.post(API_URL, projectData);
+    const response = await axiosInstance.post("/api/projects", projectData);
     return response.data;
 };
 
-export const updateProject = async ({ id, data }) => {
-    const response = await axios.patch(`${API_URL}/${id}`, data);
+// Update project
+export const updateProject = async (projectId, projectData) => {
+    const response = await axiosInstance.put(
+        `/api/projects/${projectId}`,
+        projectData
+    );
     return response.data;
 };
 
-export const deleteProject = async (id) => {
-    const response = await axios.delete(`${API_URL}/${id}`);
-    return response.data;
-};
-
-export const getProjectMembers = async (id) => {
-    const response = await axios.get(`${API_URL}/${id}/members`);
-    return response.data;
-};
-
-export const addProjectMember = async ({ id, userId }) => {
-    const response = await axios.post(`${API_URL}/${id}/members`, { userId });
-    return response.data;
-};
-
-export const removeProjectMember = async ({ id, userId }) => {
-    const response = await axios.delete(`${API_URL}/${id}/members/${userId}`);
+// Delete project
+export const deleteProject = async (projectId) => {
+    const response = await axiosInstance.delete(`/api/projects/${projectId}`);
     return response.data;
 };

@@ -13,7 +13,7 @@ router.get("/", auth, ProjectController.getAllProjects);
 router.get("/:id", auth, ProjectController.getProjectById);
 
 // Update project
-router.patch("/:id", auth, ProjectController.updateProject);
+router.put("/:id", auth, ProjectController.updateProject);
 
 // Add member to project
 router.post("/:id/members", auth, ProjectController.addMember);
@@ -26,5 +26,14 @@ router.get("/:id/progress", auth, ProjectController.getProjectProgress);
 
 // Delete project
 router.delete("/:id", auth, ProjectController.deleteProject);
+
+// Đăng ký tham gia dự án
+router.post("/:id/register", auth, ProjectController.registerForProject);
+
+// Duyệt nhân viên tham gia dự án
+router.post("/:id/approve/:userId", auth, ProjectController.approveMember);
+
+// Từ chối nhân viên tham gia dự án
+router.post("/:id/reject/:userId", auth, ProjectController.rejectMember);
 
 module.exports = router;

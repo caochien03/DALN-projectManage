@@ -1,4 +1,6 @@
 const ProjectService = require("../services/project.service");
+const User = require("../models/User");
+const Project = require("../models/Project");
 
 class ProjectController {
     static async createProject(req, res) {
@@ -120,6 +122,47 @@ class ProjectController {
             res.json({ message: "Project deleted successfully" });
         } catch (error) {
             res.status(500).json({ error: error.message });
+        }
+    }
+
+    static async registerForProject(req, res) {
+        try {
+            const { id } = req.params;
+            const userId = req.user._id;
+            const result = await ProjectService.registerForProject(id, userId);
+            res.status(200).json(result);
+        } catch (error) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    static async approveMember(req, res) {
+        try {
+            const { id, userId } = req.params;
+            const managerId = req.user._id;
+            const result = await ProjectService.approveMember(
+                id,
+                userId,
+                managerId
+            );
+            res.status(200).json(result);
+        } catch (error) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    static async rejectMember(req, res) {
+        try {
+            const { id, userId } = req.params;
+            const managerId = req.user._id;
+            const result = await ProjectService.rejectMember(
+                id,
+                userId,
+                managerId
+            );
+            res.status(200).json(result);
+        } catch (error) {
+            res.status(500).json({ message: error.message });
         }
     }
 }

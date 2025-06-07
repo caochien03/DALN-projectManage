@@ -1,186 +1,153 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import {
-    Container,
-    Paper,
-    TextField,
-    Button,
-    Typography,
-    Box,
-} from "@mui/material";
-import { setCredentials } from "../store/slices/authSlice";
-import { login } from "../services/auth";
+import { useNavigate } from "react-router-dom";
+import { login, forgotPassword } from "../services/auth";
+import { toast } from "react-toastify";
 
-function Login() {
+export default function Login() {
     const navigate = useNavigate();
-    const dispatch = useDispatch();
-    const [formData, setFormData] = useState({
-        email: "",
-        password: "",
-    });
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [showForgotPassword, setShowForgotPassword] = useState(false);
 
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value,
-        });
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setError("");
+        setIsLoading(true);
+
+        try {
+            await login(email, password);
+            toast.success("Đăng nhập thành công");
+            navigate("/");
+        } catch (err) {
+            const errorMessage =
+                err.response?.data?.message || "Đăng nhập thất bại";
+            setError(errorMessage);
+            toast.error(errorMessage);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleSubmit = async (e) => {
+    const handleForgotPassword = async (e) => {
         e.preventDefault();
+        setError("");
+        setIsLoading(true);
+
         try {
-            const response = await login(formData);
-
-            if (!response.token) {
-                throw new Error("No token received from server");
-            }
-
-            localStorage.setItem("token", response.token);
-            localStorage.setItem("user", JSON.stringify(response.user));
-
-            dispatch(
-                setCredentials({
-                    token: response.token,
-                    user: response.user,
-                })
+            await forgotPassword(email);
+            toast.success(
+                "Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn"
             );
-
-            navigate("/dashboard", { replace: true });
+            setShowForgotPassword(false);
         } catch (err) {
-            setError(
-                err.response?.data?.message || err.message || "Login failed"
-            );
+            const errorMessage =
+                err.response?.data?.message ||
+                "Không thể xử lý yêu cầu đặt lại mật khẩu";
+            setError(errorMessage);
+            toast.error(errorMessage);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
-        <Box
-            sx={{
-                minHeight: "100vh",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                bgcolor: "background.default",
-            }}
-        >
-            <Container component="main" maxWidth="xs">
-                <Paper
-                    elevation={3}
-                    sx={{
-                        padding: 4,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        width: "100%",
-                        borderRadius: 2,
-                    }}
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-md w-full space-y-8">
+                <div>
+                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                        {showForgotPassword
+                            ? "Reset your password"
+                            : "Sign in to your account"}
+                    </h2>
+                </div>
+
+                {error && (
+                    <div
+                        className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+                        role="alert"
+                    >
+                        <span className="block sm:inline">{error}</span>
+                    </div>
+                )}
+
+                <form
+                    className="mt-8 space-y-6"
+                    onSubmit={
+                        showForgotPassword ? handleForgotPassword : handleLogin
+                    }
                 >
-                    <Typography
-                        component="h1"
-                        variant="h4"
-                        sx={{
-                            mb: 3,
-                            fontWeight: "bold",
-                            color: "primary.main",
-                        }}
-                    >
-                        Welcome Back
-                    </Typography>
-                    <Typography
-                        component="h2"
-                        variant="h6"
-                        sx={{ mb: 3, color: "text.secondary" }}
-                    >
-                        Sign in to your account
-                    </Typography>
-                    <Box
-                        component="form"
-                        onSubmit={handleSubmit}
-                        sx={{ width: "100%" }}
-                    >
-                        <TextField
-                            margin="normal"
-                            required
-                            fullWidth
-                            id="email"
-                            label="Email Address"
-                            name="email"
-                            autoComplete="email"
-                            autoFocus
-                            value={formData.email}
-                            onChange={handleChange}
-                            sx={{ mb: 2 }}
-                        />
-                        <TextField
-                            margin="normal"
-                            required
-                            fullWidth
-                            name="password"
-                            label="Password"
-                            type="password"
-                            id="password"
-                            autoComplete="current-password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            sx={{ mb: 2 }}
-                        />
-                        {error && (
-                            <Typography
-                                color="error"
-                                sx={{
-                                    mt: 2,
-                                    mb: 2,
-                                    textAlign: "center",
-                                    bgcolor: "error.light",
-                                    color: "error.contrastText",
-                                    py: 1,
-                                    px: 2,
-                                    borderRadius: 1,
-                                }}
-                            >
-                                {error}
-                            </Typography>
+                    <div className="rounded-md shadow-sm -space-y-px">
+                        <div>
+                            <label htmlFor="email-address" className="sr-only">
+                                Email address
+                            </label>
+                            <input
+                                id="email-address"
+                                name="email"
+                                type="email"
+                                autoComplete="email"
+                                required
+                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                placeholder="Email address"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                        </div>
+                        {!showForgotPassword && (
+                            <div>
+                                <label htmlFor="password" className="sr-only">
+                                    Password
+                                </label>
+                                <input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    autoComplete="current-password"
+                                    required
+                                    className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                    placeholder="Password"
+                                    value={password}
+                                    onChange={(e) =>
+                                        setPassword(e.target.value)
+                                    }
+                                />
+                            </div>
                         )}
-                        <Button
-                            type="submit"
-                            fullWidth
-                            variant="contained"
-                            sx={{
-                                mt: 3,
-                                mb: 2,
-                                py: 1.5,
-                                fontSize: "1.1rem",
-                                textTransform: "none",
-                                borderRadius: 2,
-                            }}
-                        >
-                            Sign In
-                        </Button>
-                        <Box
-                            sx={{
-                                textAlign: "center",
-                                mt: 2,
-                            }}
-                        >
-                            <Link
-                                component="button"
-                                variant="body2"
-                                to="/forgot-password"
-                                style={{
-                                    textDecoration: "none",
-                                    color: "inherit",
-                                }}
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                        <div className="text-sm">
+                            <button
+                                type="button"
+                                className="font-medium text-indigo-600 hover:text-indigo-500"
+                                onClick={() =>
+                                    setShowForgotPassword(!showForgotPassword)
+                                }
                             >
-                                Forgot password?
-                            </Link>
-                        </Box>
-                    </Box>
-                </Paper>
-            </Container>
-        </Box>
+                                {showForgotPassword
+                                    ? "Back to login"
+                                    : "Forgot your password?"}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                            {isLoading
+                                ? "Processing..."
+                                : showForgotPassword
+                                ? "Reset Password"
+                                : "Sign in"}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     );
 }
-
-export default Login;

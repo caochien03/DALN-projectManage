@@ -4,77 +4,104 @@ import {
     Route,
     Navigate,
 } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
-import { useSelector } from "react-redux";
-import { ThemeProvider, CssBaseline } from "@mui/material";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Provider } from "react-redux";
-import theme from "./theme";
-import store from "./store";
+import { useState, useEffect } from "react";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import MainLayout from "./layouts/MainLayout";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import Projects from "./pages/Projects";
-import Tasks from "./pages/Tasks";
-import Departments from "./pages/Departments";
 import Users from "./pages/Users";
+import Departments from "./pages/Departments";
+import Projects from "./pages/Projects";
 import Profile from "./pages/Profile";
-import ForgotPassword from "./pages/ForgotPassword";
-import { setNavigate } from "./utils/navigation";
 
-const queryClient = new QueryClient();
+function PrivateRoute({ children }) {
+    const token = localStorage.getItem("token");
+    return token ? children : <Navigate to="/login" />;
+}
 
-function AppRoutes() {
-    const navigate = useNavigate();
-    const { isAuthenticated } = useSelector((state) => state.auth);
+export default function App() {
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        setNavigate(navigate);
-    }, [navigate]);
+        // Check if user is authenticated
+        setIsLoading(false);
+    }, []);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            </div>
+        );
+    }
 
     return (
-        <Routes>
-            <Route
-                path="/login"
-                element={!isAuthenticated ? <Login /> : <Navigate to="/" />}
+        <Router>
+            <ToastContainer
+                position="top-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="light"
             />
-            <Route
-                path="/forgot-password"
-                element={
-                    !isAuthenticated ? <ForgotPassword /> : <Navigate to="/" />
-                }
-            />
-            <Route
-                path="/"
-                element={
-                    isAuthenticated ? <MainLayout /> : <Navigate to="/login" />
-                }
-            >
-                <Route index element={<Dashboard />} />
-                <Route path="projects" element={<Projects />} />
-                <Route path="tasks" element={<Tasks />} />
-                <Route path="departments" element={<Departments />} />
-                <Route path="users" element={<Users />} />
-                <Route path="profile" element={<Profile />} />
-            </Route>
-        </Routes>
+            <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route
+                    path="/"
+                    element={
+                        <PrivateRoute>
+                            <MainLayout>
+                                <Projects />
+                            </MainLayout>
+                        </PrivateRoute>
+                    }
+                />
+                <Route
+                    path="/users"
+                    element={
+                        <PrivateRoute>
+                            <MainLayout>
+                                <Users />
+                            </MainLayout>
+                        </PrivateRoute>
+                    }
+                />
+                <Route
+                    path="/departments"
+                    element={
+                        <PrivateRoute>
+                            <MainLayout>
+                                <Departments />
+                            </MainLayout>
+                        </PrivateRoute>
+                    }
+                />
+                <Route
+                    path="/projects"
+                    element={
+                        <PrivateRoute>
+                            <MainLayout>
+                                <Projects />
+                            </MainLayout>
+                        </PrivateRoute>
+                    }
+                />
+                <Route
+                    path="/profile"
+                    element={
+                        <PrivateRoute>
+                            <MainLayout>
+                                <Profile />
+                            </MainLayout>
+                        </PrivateRoute>
+                    }
+                />
+            </Routes>
+        </Router>
     );
 }
-
-function App() {
-    return (
-        <Provider store={store}>
-            <QueryClientProvider client={queryClient}>
-                <ThemeProvider theme={theme}>
-                    <CssBaseline />
-                    <Router>
-                        <AppRoutes />
-                    </Router>
-                </ThemeProvider>
-            </QueryClientProvider>
-        </Provider>
-    );
-}
-
-export default App;

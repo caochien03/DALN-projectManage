@@ -1,179 +1,144 @@
-import { useState } from "react";
-import {
-    Container,
-    Paper,
-    Typography,
-    Box,
-    Grid,
-    TextField,
-    Button,
-    Avatar,
-    Divider,
-} from "@mui/material";
-import { useSelector } from "react-redux";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateUser } from "../services/user";
+import { useState, useEffect } from "react";
+import { getCurrentUser, updateProfile } from "../services/auth";
+import { toast } from "react-toastify";
 
-function Profile() {
-    const user = useSelector((state) => state.auth.user);
-    const [isEditing, setIsEditing] = useState(false);
+export default function Profile() {
     const [formData, setFormData] = useState({
-        name: user?.name || "",
-        email: user?.email || "",
-        position: user?.position || "",
-        phone: user?.phone || "",
-        address: user?.address || "",
+        name: "",
+        email: "",
+        position: "",
+        phone: "",
+        address: "",
     });
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
 
-    const queryClient = useQueryClient();
+    useEffect(() => {
+        fetchProfile();
+    }, []);
 
-    const updateMutation = useMutation({
-        mutationFn: updateUser,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["user"] });
-            setIsEditing(false);
-        },
-    });
-
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value,
-        });
+    const fetchProfile = async () => {
+        try {
+            const user = await getCurrentUser();
+            setFormData({
+                name: user.name || "",
+                email: user.email || "",
+                position: user.position || "",
+                phone: user.phone || "",
+                address: user.address || "",
+            });
+        } catch (err) {
+            setError("Không thể tải thông tin cá nhân");
+        }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        updateMutation.mutate({
-            id: user._id,
-            data: formData,
-        });
+        setIsLoading(true);
+        setError("");
+        setSuccess("");
+        try {
+            await updateProfile(formData);
+            setSuccess("Cập nhật thông tin thành công!");
+            toast.success("Cập nhật thông tin thành công!");
+        } catch (err) {
+            setError(err.response?.data?.message || "Cập nhật thất bại");
+            toast.error(err.response?.data?.message || "Cập nhật thất bại");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
-        <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-            <Paper elevation={3} sx={{ p: 4 }}>
-                <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
-                    <Avatar
-                        sx={{
-                            width: 100,
-                            height: 100,
-                            fontSize: "2.5rem",
-                            mr: 3,
-                        }}
-                    >
-                        {user?.name?.charAt(0) || "U"}
-                    </Avatar>
-                    <Box>
-                        <Typography variant="h4" gutterBottom>
-                            {user?.name}
-                        </Typography>
-                        <Typography variant="subtitle1" color="text.secondary">
-                            {user?.email}
-                        </Typography>
-                    </Box>
-                </Box>
-
-                <Divider sx={{ mb: 4 }} />
-
-                <form onSubmit={handleSubmit}>
-                    <Grid container spacing={3}>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                fullWidth
-                                label="Name"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleChange}
-                                disabled={!isEditing}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                fullWidth
-                                label="Email"
-                                name="email"
-                                type="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                disabled={!isEditing}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                fullWidth
-                                label="Position"
-                                name="position"
-                                value={formData.position}
-                                onChange={handleChange}
-                                disabled={!isEditing}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                fullWidth
-                                label="Phone"
-                                name="phone"
-                                value={formData.phone}
-                                onChange={handleChange}
-                                disabled={!isEditing}
-                            />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <TextField
-                                fullWidth
-                                label="Address"
-                                name="address"
-                                multiline
-                                rows={3}
-                                value={formData.address}
-                                onChange={handleChange}
-                                disabled={!isEditing}
-                            />
-                        </Grid>
-                    </Grid>
-
-                    <Box
-                        sx={{
-                            mt: 4,
-                            display: "flex",
-                            justifyContent: "flex-end",
-                            gap: 2,
-                        }}
-                    >
-                        {isEditing ? (
-                            <>
-                                <Button
-                                    variant="outlined"
-                                    onClick={() => setIsEditing(false)}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    variant="contained"
-                                    color="primary"
-                                    disabled={updateMutation.isPending}
-                                >
-                                    {updateMutation.isPending
-                                        ? "Saving..."
-                                        : "Save Changes"}
-                                </Button>
-                            </>
-                        ) : (
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={() => setIsEditing(true)}
-                            >
-                                Edit Profile
-                            </Button>
-                        )}
-                    </Box>
-                </form>
-            </Paper>
-        </Container>
+        <div className="max-w-xl mx-auto mt-10 bg-white p-8 rounded shadow">
+            <h2 className="text-2xl font-bold mb-6 text-center">
+                Chỉnh sửa thông tin cá nhân
+            </h2>
+            {error && <div className="mb-4 text-red-500">{error}</div>}
+            {success && <div className="mb-4 text-green-500">{success}</div>}
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                        Họ tên
+                    </label>
+                    <input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) =>
+                            setFormData({ ...formData, name: e.target.value })
+                        }
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        required
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                        Email
+                    </label>
+                    <input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) =>
+                            setFormData({ ...formData, email: e.target.value })
+                        }
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        required
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                        Vị trí
+                    </label>
+                    <input
+                        type="text"
+                        value={formData.position}
+                        onChange={(e) =>
+                            setFormData({
+                                ...formData,
+                                position: e.target.value,
+                            })
+                        }
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                        Số điện thoại
+                    </label>
+                    <input
+                        type="text"
+                        value={formData.phone}
+                        onChange={(e) =>
+                            setFormData({ ...formData, phone: e.target.value })
+                        }
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                        Địa chỉ
+                    </label>
+                    <input
+                        type="text"
+                        value={formData.address}
+                        onChange={(e) =>
+                            setFormData({
+                                ...formData,
+                                address: e.target.value,
+                            })
+                        }
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                </div>
+                <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700 focus:outline-none"
+                >
+                    {isLoading ? "Đang lưu..." : "Lưu thay đổi"}
+                </button>
+            </form>
+        </div>
     );
 }
-
-export default Profile;

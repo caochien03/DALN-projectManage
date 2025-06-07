@@ -35,6 +35,12 @@ const projectSchema = new mongoose.Schema(
             type: Date,
             required: true,
         },
+        departments: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Department",
+            },
+        ],
         members: [
             {
                 user: {
@@ -46,6 +52,12 @@ const projectSchema = new mongoose.Schema(
                     enum: ["manager", "member"],
                     default: "member",
                 },
+            },
+        ],
+        pendingMembers: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User",
             },
         ],
         tasks: [

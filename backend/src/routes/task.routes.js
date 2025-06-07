@@ -16,7 +16,7 @@ router.get("/:id", auth, TaskController.getTaskById);
 router.get("/project/:projectId", auth, TaskController.getTasksByProject);
 
 // Update task
-router.patch("/:id", auth, TaskController.updateTask);
+router.put("/:id", auth, TaskController.updateTask);
 
 // Add comment to task
 router.post("/:id/comments", auth, TaskController.addComment);

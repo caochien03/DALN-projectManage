@@ -1,41 +1,45 @@
-import axios from "../utils/axios";
+import axiosInstance from "../utils/axios";
 
-const API_URL = "/auth";
-
-export const login = async (credentials) => {
-    const response = await axios.post(`${API_URL}/login`, credentials);
+// Login
+export const login = async (email, password) => {
+    const response = await axiosInstance.post("/api/auth/login", {
+        email,
+        password,
+    });
+    localStorage.setItem("token", response.data.token);
     return response.data;
 };
 
-export const register = async (userData) => {
-    const response = await axios.post(`${API_URL}/register`, userData);
-    return response.data;
+// Logout
+export const logout = () => {
+    localStorage.removeItem("token");
 };
 
-export const getCurrentUser = async () => {
-    const response = await axios.get(`${API_URL}/me`);
-    return response.data;
-};
-
-export const updateProfile = async (userData) => {
-    const response = await axios.patch(`${API_URL}/profile`, userData);
-    return response.data;
-};
-
-export const changePassword = async (passwordData) => {
-    const response = await axios.patch(`${API_URL}/password`, passwordData);
-    return response.data;
-};
-
-export const forgotPassword = async (email) => {
-    const response = await axios.post(`${API_URL}/forgot-password`, { email });
-    return response.data;
-};
-
-export const resetPassword = async (token, newPassword) => {
-    const response = await axios.post(`${API_URL}/reset-password`, {
-        token,
+// Change Password
+export const changePassword = async (currentPassword, newPassword) => {
+    const response = await axiosInstance.post("/api/auth/change-password", {
+        currentPassword,
         newPassword,
     });
+    return response.data;
+};
+
+// Forgot Password
+export const forgotPassword = async (email) => {
+    const response = await axiosInstance.post("/api/auth/forgot-password", {
+        email,
+    });
+    return response.data;
+};
+
+// Get current user
+export const getCurrentUser = async () => {
+    const response = await axiosInstance.get("/api/auth/me");
+    return response.data;
+};
+
+// Update profile
+export const updateProfile = async (profileData) => {
+    const response = await axiosInstance.put("/api/auth/profile", profileData);
     return response.data;
 };

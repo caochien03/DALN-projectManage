@@ -1,48 +1,33 @@
-import axios from "../utils/axios";
+import axiosInstance from "../utils/axios";
 
-const API_URL = "/departments";
-
-export const getDepartments = async () => {
-    const response = await axios.get(API_URL);
+// Get all departments
+export const getAllDepartments = async () => {
+    const response = await axiosInstance.get("/api/departments");
     return response.data;
 };
 
-export const getDepartmentById = async (id) => {
-    const response = await axios.get(`${API_URL}/${id}`);
-    return response.data;
-};
-
+// Create department
 export const createDepartment = async (departmentData) => {
-    const response = await axios.post(API_URL, departmentData);
+    const response = await axiosInstance.post(
+        "/api/departments",
+        departmentData
+    );
     return response.data;
 };
 
-export const updateDepartment = async ({ id, data }) => {
-    const response = await axios.patch(`${API_URL}/${id}`, data);
+// Update department
+export const updateDepartment = async (departmentId, departmentData) => {
+    const response = await axiosInstance.put(
+        `/api/departments/${departmentId}`,
+        departmentData
+    );
     return response.data;
 };
 
-export const deleteDepartment = async (id) => {
-    const response = await axios.delete(`${API_URL}/${id}`);
-    return response.data;
-};
-
-export const getDepartmentMembers = async (id) => {
-    const response = await axios.get(`${API_URL}/${id}/members`);
-    return response.data;
-};
-
-export const addDepartmentMember = async ({ id, userId }) => {
-    const response = await axios.post(`${API_URL}/${id}/members`, { userId });
-    return response.data;
-};
-
-export const removeDepartmentMember = async ({ id, userId }) => {
-    const response = await axios.delete(`${API_URL}/${id}/members/${userId}`);
-    return response.data;
-};
-
-export const getDepartmentStats = async (id) => {
-    const response = await axios.get(`${API_URL}/${id}/stats`);
+// Delete department
+export const deleteDepartment = async (departmentId) => {
+    const response = await axiosInstance.delete(
+        `/api/departments/${departmentId}`
+    );
     return response.data;
 };

@@ -1,43 +1,25 @@
-import axios from "../utils/axios";
+import axiosInstance from "../utils/axios";
 
-const API_URL = "/users";
-
-export const getUsers = async () => {
-    const response = await axios.get(API_URL);
+// Get all users
+export const getAllUsers = async () => {
+    const response = await axiosInstance.get("/api/users");
     return response.data;
 };
 
-export const getUserById = async (id) => {
-    const response = await axios.get(`${API_URL}/${id}`);
-    return response.data;
-};
-
+// Create user
 export const createUser = async (userData) => {
-    const response = await axios.post(API_URL, userData);
+    const response = await axiosInstance.post("/api/users", userData);
     return response.data;
 };
 
-export const updateUser = async ({ id, data }) => {
-    const response = await axios.patch(`${API_URL}/${id}`, data);
+// Update user
+export const updateUser = async (userId, userData) => {
+    const response = await axiosInstance.put(`/api/users/${userId}`, userData);
     return response.data;
 };
 
-export const deleteUser = async (id) => {
-    const response = await axios.delete(`${API_URL}/${id}`);
-    return response.data;
-};
-
-export const getUserTasks = async (id) => {
-    const response = await axios.get(`${API_URL}/${id}/tasks`);
-    return response.data;
-};
-
-export const getUserProjects = async (id) => {
-    const response = await axios.get(`${API_URL}/${id}/projects`);
-    return response.data;
-};
-
-export const getUserDepartments = async (id) => {
-    const response = await axios.get(`${API_URL}/${id}/departments`);
+// Delete user
+export const deleteUser = async (userId) => {
+    const response = await axiosInstance.delete(`/api/users/${userId}`);
     return response.data;
 };

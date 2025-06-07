@@ -19,7 +19,7 @@ router.get("/", auth, DepartmentController.getAllDepartments);
 router.get("/:id", auth, DepartmentController.getDepartmentById);
 
 // Update department (admin only)
-router.patch(
+router.put(
     "/:id",
     auth,
     checkRole(["admin"]),

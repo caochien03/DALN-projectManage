@@ -40,7 +40,7 @@ router.post("/", auth, async (req, res) => {
 });
 
 // Update user
-router.patch("/:id", auth, async (req, res) => {
+router.put("/:id", auth, async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
         if (!user) {
@@ -81,7 +81,7 @@ router.get("/notifications", auth, async (req, res) => {
 });
 
 // Mark notification as read
-router.patch("/notifications/:notificationId", auth, async (req, res) => {
+router.put("/notifications/:notificationId", auth, async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
         const notification = user.notifications.id(req.params.notificationId);

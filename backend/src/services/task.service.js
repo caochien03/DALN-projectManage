@@ -37,16 +37,45 @@ class TaskService {
     }
 
     static async updateTask(id, updates) {
-        const task = await Task.findById(id);
-        if (!task) {
-            return null;
-        }
+        try {
+            const task = await Task.findById(id);
+            if (!task) {
+                return null;
+            }
 
-        Object.keys(updates).forEach(
-            (update) => (task[update] = updates[update])
-        );
-        await task.save();
-        return task;
+            // Handle date fields
+            if (updates.startDate) {
+                updates.startDate = new Date(updates.startDate);
+            }
+            if (updates.dueDate) {
+                updates.dueDate = new Date(updates.dueDate);
+            }
+
+            // Update only allowed fields
+            const allowedUpdates = [
+                "title",
+                "description",
+                "status",
+                "priority",
+                "startDate",
+                "dueDate",
+                "progress",
+                "assignedTo",
+                "milestone",
+                "project",
+            ];
+
+            Object.keys(updates).forEach((update) => {
+                if (allowedUpdates.includes(update)) {
+                    task[update] = updates[update];
+                }
+            });
+
+            await task.save();
+            return task;
+        } catch (error) {
+            throw new Error(error.message);
+        }
     }
 
     static async addComment(taskId, commentData) {

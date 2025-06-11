@@ -44,6 +44,9 @@ class TaskController {
             "startDate",
             "dueDate",
             "progress",
+            "assignedTo",
+            "milestone",
+            "project",
         ];
         const isValidOperation = updates.every((update) =>
             allowedUpdates.includes(update)

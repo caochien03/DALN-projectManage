@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { useNavigate } from "react-router-dom";
 import {
     getAllProjects,
     createProject,
@@ -10,7 +11,7 @@ import { getAllDepartments } from "../services/department";
 import { getAllUsers } from "../services/user";
 import Modal from "../components/Modal";
 
-const statuses = ["TODO", "IN_PROGRESS", "REVIEW", "DONE"];
+const statuses = ["open", "close"];
 
 export default function Projects() {
     const [projects, setProjects] = useState([]);
@@ -30,7 +31,9 @@ export default function Projects() {
         departments: [],
         members: [],
         milestones: [],
+        manager: "",
     });
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchProjects();
@@ -89,6 +92,7 @@ export default function Projects() {
                 departments: [],
                 members: [],
                 milestones: [],
+                manager: "",
             });
             fetchProjects();
         } catch (error) {
@@ -105,11 +109,19 @@ export default function Projects() {
             description: project.description,
             status: project.status,
             progress: project.progress,
-            startDate: project.startDate,
-            endDate: project.endDate,
-            departments: project.departments,
-            members: project.members,
+            startDate: project.startDate ? project.startDate.slice(0, 10) : "",
+            endDate: project.endDate ? project.endDate.slice(0, 10) : "",
+            departments: project.departments
+                ? project.departments.map((dep) => dep._id || dep)
+                : [],
+            members: project.members
+                ? project.members.map((m) => ({
+                      user: m.user?._id || m.user,
+                      role: m.role,
+                  }))
+                : [],
             milestones: project.milestones,
+            manager: project.manager?._id || project.manager || "",
         });
         setShowForm(true);
     };
@@ -128,6 +140,22 @@ export default function Projects() {
     const getProjectsByStatus = (status) => {
         return projects.filter((project) => project.status === status);
     };
+
+    // Lọc user theo department đã chọn
+    const filteredUsers = users.filter((user) =>
+        formData.departments.includes(user.department?._id || user.department)
+    );
+
+    // Tự động loại bỏ member không còn thuộc department đã chọn
+    useEffect(() => {
+        setFormData((prev) => ({
+            ...prev,
+            members: prev.members.filter((m) =>
+                filteredUsers.some((u) => u._id === m.user)
+            ),
+        }));
+        // eslint-disable-next-line
+    }, [formData.departments]);
 
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -155,6 +183,7 @@ export default function Projects() {
                                 departments: [],
                                 members: [],
                                 milestones: [],
+                                manager: "",
                             });
                             setShowForm(true);
                         }}
@@ -334,15 +363,16 @@ export default function Projects() {
                             name="departments"
                             multiple
                             value={formData.departments}
-                            onChange={(e) =>
+                            onChange={(e) => {
+                                const selectedOptions = Array.from(
+                                    e.target.selectedOptions,
+                                    (option) => option.value
+                                );
                                 setFormData({
                                     ...formData,
-                                    departments: Array.from(
-                                        e.target.selectedOptions,
-                                        (option) => option.value
-                                    ),
-                                })
-                            }
+                                    departments: selectedOptions,
+                                });
+                            }}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         >
                             {departments.map((dept) => (
@@ -351,6 +381,9 @@ export default function Projects() {
                                 </option>
                             ))}
                         </select>
+                        <p className="mt-1 text-sm text-gray-500">
+                            Hold Ctrl/Cmd to select multiple departments
+                        </p>
                     </div>
 
                     <div>
@@ -365,20 +398,52 @@ export default function Projects() {
                             name="members"
                             multiple
                             value={formData.members.map((m) => m.user)}
+                            onChange={(e) => {
+                                const selectedOptions = Array.from(
+                                    e.target.selectedOptions,
+                                    (option) => ({
+                                        user: option.value,
+                                        role: "member",
+                                    })
+                                );
+                                setFormData({
+                                    ...formData,
+                                    members: selectedOptions,
+                                });
+                            }}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        >
+                            {filteredUsers.map((user) => (
+                                <option key={user._id} value={user._id}>
+                                    {user.name} ({user.position})
+                                </option>
+                            ))}
+                        </select>
+                        <p className="mt-1 text-sm text-gray-500">
+                            Hold Ctrl/Cmd to select multiple members
+                        </p>
+                    </div>
+
+                    <div>
+                        <label
+                            htmlFor="manager"
+                            className="block text-sm font-medium text-gray-700"
+                        >
+                            Manager
+                        </label>
+                        <select
+                            id="manager"
+                            name="manager"
+                            value={formData.manager}
                             onChange={(e) =>
                                 setFormData({
                                     ...formData,
-                                    members: Array.from(
-                                        e.target.selectedOptions,
-                                        (option) => ({
-                                            user: option.value,
-                                            role: "member",
-                                        })
-                                    ),
+                                    manager: e.target.value,
                                 })
                             }
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         >
+                            <option value="">Select Manager</option>
                             {users.map((user) => (
                                 <option key={user._id} value={user._id}>
                                     {user.name} ({user.position})
@@ -422,7 +487,10 @@ export default function Projects() {
                                 {getProjectsByStatus(status).map((project) => (
                                     <div
                                         key={project.id}
-                                        className="bg-white p-4 rounded-lg shadow"
+                                        className="bg-white p-4 rounded-lg shadow cursor-pointer hover:bg-gray-100"
+                                        onClick={() =>
+                                            navigate(`/projects/${project._id}`)
+                                        }
                                     >
                                         <h4 className="font-medium text-gray-900">
                                             {project.name}
@@ -432,17 +500,19 @@ export default function Projects() {
                                         </p>
                                         <div className="mt-4 flex justify-end space-x-2">
                                             <button
-                                                onClick={() =>
-                                                    handleEdit(project)
-                                                }
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleEdit(project);
+                                                }}
                                                 className="text-indigo-600 hover:text-indigo-900"
                                             >
                                                 <PencilIcon className="h-5 w-5" />
                                             </button>
                                             <button
-                                                onClick={() =>
-                                                    handleDelete(project.id)
-                                                }
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDelete(project.id);
+                                                }}
                                                 className="text-red-600 hover:text-red-900"
                                             >
                                                 <TrashIcon className="h-5 w-5" />

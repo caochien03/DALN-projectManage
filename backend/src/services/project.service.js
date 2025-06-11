@@ -12,13 +12,13 @@ class ProjectService {
     static async getAllProjects() {
         return Project.find()
             .populate("createdBy", "name email")
-            .populate("members.user", "name email");
+            .populate("members.user", "name email position");
     }
 
     static async getProjectById(id) {
         return Project.findById(id)
             .populate("createdBy", "name email")
-            .populate("members.user", "name email")
+            .populate("members.user", "name email position")
             .populate("tasks");
     }
 

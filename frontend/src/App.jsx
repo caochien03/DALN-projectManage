@@ -13,6 +13,7 @@ import Users from "./pages/Users";
 import Departments from "./pages/Departments";
 import Projects from "./pages/Projects";
 import Profile from "./pages/Profile";
+import ProjectDetail from "./pages/ProjectDetail";
 
 function PrivateRoute({ children }) {
     const token = localStorage.getItem("token");
@@ -87,6 +88,16 @@ export default function App() {
                         <PrivateRoute>
                             <MainLayout>
                                 <Projects />
+                            </MainLayout>
+                        </PrivateRoute>
+                    }
+                />
+                <Route
+                    path="/projects/:id"
+                    element={
+                        <PrivateRoute>
+                            <MainLayout>
+                                <ProjectDetail />
                             </MainLayout>
                         </PrivateRoute>
                     }

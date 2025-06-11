@@ -46,6 +46,9 @@ class ProjectController {
             "startDate",
             "endDate",
             "manager",
+            "departments",
+            "members",
+            "milestones",
         ];
         const isValidOperation = updates.every((update) =>
             allowedUpdates.includes(update)

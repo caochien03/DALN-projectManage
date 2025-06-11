@@ -71,6 +71,10 @@ const taskSchema = new mongoose.Schema(
                 },
             },
         ],
+        milestone: {
+            type: mongoose.Schema.Types.ObjectId,
+            required: false,
+        },
     },
     {
         timestamps: true,

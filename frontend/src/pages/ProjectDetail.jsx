@@ -6,6 +6,7 @@ import axiosInstance from "../utils/axios";
 import { createTask, updateTask, deleteTask } from "../services/task";
 import Modal from "../components/Modal";
 import TaskBoard from "../components/TaskBoard";
+import DocumentManager from "../components/DocumentManager";
 
 export default function ProjectDetail() {
     const { id } = useParams();
@@ -225,6 +226,9 @@ export default function ProjectDetail() {
                 getUserName={getUserName}
                 onTaskStatusChangeOptimistic={handleTaskStatusChangeOptimistic}
             />
+
+            {/* Section quản lý tài liệu */}
+            <DocumentManager projectId={id} canEdit={true} />
 
             <Modal
                 isOpen={showTaskModal}

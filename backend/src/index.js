@@ -19,6 +19,7 @@ const authRoutes = require("./routes/auth.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const departmentRoutes = require("./routes/department.routes");
 const documentRoutes = require("./routes/document.route");
+const commentRoutes = require("./routes/comment.route");
 
 app.use("/api/projects", projectRoutes);
 app.use("/api/tasks", taskRoutes);
@@ -27,6 +28,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/departments", departmentRoutes);
 app.use("/api", documentRoutes);
+app.use("/api", commentRoutes);
 
 // Connect to MongoDB
 mongoose

@@ -110,6 +110,18 @@ class TaskController {
             res.status(500).json({ error: error.message });
         }
     }
+
+    static async deleteTask(req, res) {
+        try {
+            const task = await TaskService.deleteTask(req.params.id);
+            if (!task) {
+                return res.status(404).json({ error: "Task not found" });
+            }
+            res.json({ message: "Task deleted successfully" });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
 }
 
 module.exports = TaskController;

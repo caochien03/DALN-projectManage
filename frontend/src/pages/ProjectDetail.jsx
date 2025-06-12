@@ -7,6 +7,7 @@ import { createTask, updateTask, deleteTask } from "../services/task";
 import Modal from "../components/Modal";
 import TaskBoard from "../components/TaskBoard";
 import DocumentManager from "../components/DocumentManager";
+import CommentBox from "../components/CommentBox";
 
 export default function ProjectDetail() {
     const { id } = useParams();
@@ -175,6 +176,9 @@ export default function ProjectDetail() {
             })
             .filter(Boolean) || [];
 
+    // Lấy user hiện tại từ localStorage
+    const currentUser = JSON.parse(localStorage.getItem("user"));
+
     if (loading) return <div className="p-8">Đang tải...</div>;
     if (error) return <div className="p-8 text-red-500">{error}</div>;
     if (!project) return <div className="p-8">Không tìm thấy project</div>;
@@ -215,8 +219,31 @@ export default function ProjectDetail() {
                         Thành viên:{" "}
                         {projectMembers.map((m) => m.name).join(", ")}
                     </div>
+                    <div className="mb-2 text-gray-700 font-semibold">
+                        Milestones:
+                    </div>
+                    <ul className="list-disc ml-5">
+                        {project.milestones?.length > 0 ? (
+                            project.milestones.map((m, idx) => (
+                                <li key={idx}>
+                                    {m.name} - {m.status} -{" "}
+                                    {m.dueDate?.slice(0, 10)}
+                                </li>
+                            ))
+                        ) : (
+                            <li>Chưa có milestone nào</li>
+                        )}
+                    </ul>
                 </div>
             </div>
+
+            {/* Nút thêm task */}
+            <button
+                className="mb-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+                onClick={() => setShowTaskModal(true)}
+            >
+                Thêm task
+            </button>
 
             <TaskBoard
                 tasks={tasks}
@@ -229,6 +256,14 @@ export default function ProjectDetail() {
 
             {/* Section quản lý tài liệu */}
             <DocumentManager projectId={id} canEdit={true} />
+
+            {/* Section bình luận dự án */}
+            <CommentBox
+                type="project"
+                id={id}
+                members={projectMembers}
+                currentUser={currentUser}
+            />
 
             <Modal
                 isOpen={showTaskModal}

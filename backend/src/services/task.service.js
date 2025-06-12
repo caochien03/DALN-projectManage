@@ -110,6 +110,24 @@ class TaskService {
             .populate("assignedTo", "name email")
             .populate("comments.user", "name email");
     }
+
+    static async deleteTask(id) {
+        const task = await Task.findByIdAndDelete(id);
+        if (!task) return null;
+        // Xóa task khỏi project
+        if (task.project) {
+            await Project.findByIdAndUpdate(task.project, {
+                $pull: { tasks: task._id },
+            });
+        }
+        // Xóa task khỏi user
+        if (task.assignedTo) {
+            await User.findByIdAndUpdate(task.assignedTo, {
+                $pull: { tasks: task._id },
+            });
+        }
+        return task;
+    }
 }
 
 module.exports = TaskService;

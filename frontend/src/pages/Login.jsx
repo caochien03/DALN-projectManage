@@ -17,7 +17,10 @@ export default function Login() {
         setIsLoading(true);
 
         try {
-            await login(email, password);
+            const { token, user } = await login(email, password);
+            localStorage.setItem("token", token);
+            const userWithId = { ...user, _id: user.id };
+            localStorage.setItem("user", JSON.stringify(userWithId));
             toast.success("Đăng nhập thành công");
             navigate("/");
         } catch (err) {

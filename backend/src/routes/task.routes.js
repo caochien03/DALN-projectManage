@@ -27,4 +27,7 @@ router.get("/overdue", auth, TaskController.getOverdueTasks);
 // Get tasks by status
 router.get("/status/:status", auth, TaskController.getTasksByStatus);
 
+// Delete task
+router.delete("/:id", auth, TaskController.deleteTask);
+
 module.exports = router;

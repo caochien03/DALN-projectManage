@@ -2,8 +2,13 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getAllUsers } from "../services/user";
 import { getAllDepartments } from "../services/department";
-import axiosInstance from "../utils/axios";
 import { createTask, updateTask, deleteTask } from "../services/task";
+import {
+    getProjectById,
+    completeProject,
+    completeMilestone,
+    checkMilestoneConsistency,
+} from "../services/project";
 import Modal from "../components/Modal";
 import TaskBoard from "../components/TaskBoard";
 import DocumentManager from "../components/DocumentManager";
@@ -31,6 +36,8 @@ export default function ProjectDetail() {
     const [taskLoading, setTaskLoading] = useState(false);
     const [taskError, setTaskError] = useState("");
     const [editingTask, setEditingTask] = useState(null);
+    const [milestoneLoading, setMilestoneLoading] = useState(false);
+    const [milestoneError, setMilestoneError] = useState("");
 
     useEffect(() => {
         fetchData();
@@ -39,13 +46,13 @@ export default function ProjectDetail() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [projectRes, usersRes, departmentsRes] = await Promise.all([
-                axiosInstance.get(`/api/projects/${id}`),
+            const [projectData, usersRes, departmentsRes] = await Promise.all([
+                getProjectById(id),
                 getAllUsers(),
                 getAllDepartments(),
             ]);
-            setProject(projectRes.data);
-            setTasks(projectRes.data.tasks || []);
+            setProject(projectData);
+            setTasks(projectData.tasks || []);
             setUsers(usersRes);
             setDepartments(departmentsRes);
         } catch {
@@ -179,13 +186,83 @@ export default function ProjectDetail() {
     // Lấy user hiện tại từ localStorage
     const currentUser = JSON.parse(localStorage.getItem("user"));
 
+    // Xác nhận hoàn thành project
+    const handleCompleteProject = async () => {
+        if (
+            !window.confirm(
+                "Bạn có chắc chắn muốn xác nhận hoàn thành dự án này?"
+            )
+        )
+            return;
+        try {
+            await completeProject(id);
+            await fetchData(); // Lấy lại toàn bộ dữ liệu project mới nhất
+            alert("Đã xác nhận hoàn thành dự án");
+        } catch (err) {
+            alert(
+                err.response?.data?.error ||
+                    "Không thể xác nhận hoàn thành dự án"
+            );
+        }
+    };
+
+    // Xác nhận hoàn thành milestone
+    const handleCompleteMilestone = async (milestoneId) => {
+        if (
+            !window.confirm(
+                "Bạn có chắc chắn muốn xác nhận hoàn thành milestone này?"
+            )
+        )
+            return;
+        setMilestoneLoading(true);
+        setMilestoneError("");
+        try {
+            await completeMilestone(id, milestoneId);
+            await fetchData(); // Lấy lại toàn bộ dữ liệu project mới nhất
+            alert("Đã xác nhận hoàn thành milestone");
+        } catch (err) {
+            setMilestoneError(
+                err.response?.data?.error ||
+                    "Không thể xác nhận hoàn thành milestone"
+            );
+        } finally {
+            setMilestoneLoading(false);
+        }
+    };
+
+    // Kiểm tra tính nhất quán của milestone
+    const handleCheckMilestoneConsistency = async (milestoneId) => {
+        try {
+            const result = await checkMilestoneConsistency(id, milestoneId);
+            if (result.updated) {
+                alert(result.message);
+                fetchData();
+            }
+        } catch (err) {
+            alert(
+                err.response?.data?.error ||
+                    "Không thể kiểm tra tính nhất quán của milestone"
+            );
+        }
+    };
+
     if (loading) return <div className="p-8">Đang tải...</div>;
     if (error) return <div className="p-8 text-red-500">{error}</div>;
     if (!project) return <div className="p-8">Không tìm thấy project</div>;
 
     return (
         <div className="p-8">
-            <h1 className="text-2xl font-bold mb-4">{project.name}</h1>
+            <div className="flex justify-between items-center mb-4">
+                <h1 className="text-2xl font-bold">{project.name}</h1>
+                {project.status === "open" && (
+                    <button
+                        onClick={handleCompleteProject}
+                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                    >
+                        Xác nhận hoàn thành
+                    </button>
+                )}
+            </div>
             <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <div className="mb-2 text-gray-700">
@@ -225,15 +302,60 @@ export default function ProjectDetail() {
                     <ul className="list-disc ml-5">
                         {project.milestones?.length > 0 ? (
                             project.milestones.map((m, idx) => (
-                                <li key={idx}>
-                                    {m.name} - {m.status} -{" "}
-                                    {m.dueDate?.slice(0, 10)}
+                                <li
+                                    key={idx}
+                                    className="flex items-center gap-2"
+                                >
+                                    <span>
+                                        {m.name} - {m.status} -{" "}
+                                        {m.dueDate?.slice(0, 10)}
+                                        {m.completedAt && (
+                                            <span className="text-sm text-gray-500">
+                                                {" "}
+                                                (Hoàn thành:{" "}
+                                                {new Date(
+                                                    m.completedAt
+                                                ).toLocaleDateString()}
+                                                )
+                                            </span>
+                                        )}
+                                    </span>
+                                    {m.status === "pending" && (
+                                        <button
+                                            onClick={() =>
+                                                handleCompleteMilestone(m._id)
+                                            }
+                                            disabled={milestoneLoading}
+                                            className="text-sm bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
+                                        >
+                                            {milestoneLoading
+                                                ? "Đang xử lý..."
+                                                : "Hoàn thành"}
+                                        </button>
+                                    )}
+                                    {m.status === "completed" && (
+                                        <button
+                                            onClick={() =>
+                                                handleCheckMilestoneConsistency(
+                                                    m._id
+                                                )
+                                            }
+                                            className="text-sm bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                                        >
+                                            Kiểm tra
+                                        </button>
+                                    )}
                                 </li>
                             ))
                         ) : (
                             <li>Chưa có milestone nào</li>
                         )}
                     </ul>
+                    {milestoneError && (
+                        <div className="text-red-500 text-sm mt-2">
+                            {milestoneError}
+                        </div>
+                    )}
                 </div>
             </div>
 

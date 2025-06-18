@@ -36,4 +36,21 @@ router.post("/:id/approve/:userId", auth, ProjectController.approveMember);
 // Từ chối nhân viên tham gia dự án
 router.post("/:id/reject/:userId", auth, ProjectController.rejectMember);
 
+// Complete project
+router.put("/:id/complete", auth, ProjectController.completeProject);
+
+// Complete milestone
+router.put(
+    "/:id/milestones/:milestoneId/complete",
+    auth,
+    ProjectController.completeMilestone
+);
+
+// Check milestone consistency
+router.get(
+    "/:id/milestones/:milestoneId/check-consistency",
+    auth,
+    ProjectController.checkMilestoneConsistency
+);
+
 module.exports = router;

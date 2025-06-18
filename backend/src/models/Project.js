@@ -76,6 +76,11 @@ const projectSchema = new mongoose.Schema(
                     enum: ["pending", "completed"],
                     default: "pending",
                 },
+                completedAt: Date,
+                completedBy: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "User",
+                },
             },
         ],
         manager: {
@@ -83,10 +88,45 @@ const projectSchema = new mongoose.Schema(
             ref: "User",
             required: false,
         },
+        completedAt: Date,
+        completedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+        },
     },
     {
         timestamps: true,
     }
 );
+
+// Middleware để kiểm tra tính nhất quán của milestone
+projectSchema.pre("save", async function (next) {
+    if (this.isModified("milestones")) {
+        const hasPendingMilestone = this.milestones.some(
+            (m) => m.status === "pending" && m.completedAt
+        );
+
+        if (hasPendingMilestone) {
+            // Nếu có milestone chuyển từ completed sang pending
+            // Cập nhật status của project nếu cần
+            if (this.status === "close") {
+                this.status = "open";
+                this.completedAt = null;
+                this.completedBy = null;
+            }
+        }
+    }
+    next();
+});
+
+projectSchema.methods.updateProgress = async function () {
+    const Task = require("./Task");
+    const tasks = await Task.find({ project: this._id });
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter((t) => t.status === "completed").length;
+    this.progress =
+        totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    await this.save();
+};
 
 module.exports = mongoose.model("Project", projectSchema);

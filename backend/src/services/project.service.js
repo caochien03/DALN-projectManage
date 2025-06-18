@@ -144,6 +144,130 @@ class ProjectService {
         await project.save();
         return { message: "Member rejected successfully" };
     }
+
+    // Kiểm tra và cập nhật trạng thái milestone
+    static async checkMilestoneConsistency(projectId, milestoneId) {
+        const project = await Project.findById(projectId);
+        if (!project) {
+            throw new Error("Project not found");
+        }
+
+        const milestone = project.milestones.id(milestoneId);
+        if (!milestone) {
+            throw new Error("Milestone not found");
+        }
+
+        if (milestone.status === "completed") {
+            // Kiểm tra tất cả task trong milestone
+            const tasks = await Task.find({
+                project: projectId,
+                milestone: milestoneId,
+            });
+
+            const hasIncompleteTask = tasks.some(
+                (task) => task.status !== "completed"
+            );
+
+            if (hasIncompleteTask) {
+                // Cập nhật status của milestone
+                milestone.status = "pending";
+                milestone.completedAt = null;
+                milestone.completedBy = null;
+                await project.save();
+
+                return {
+                    updated: true,
+                    message:
+                        "Milestone status updated to pending due to incomplete tasks",
+                };
+            }
+        }
+
+        return {
+            updated: false,
+            message: "Milestone status is consistent",
+        };
+    }
+
+    // Xác nhận hoàn thành milestone
+    static async completeMilestone(projectId, milestoneId, userId) {
+        const project = await Project.findById(projectId);
+        if (!project) {
+            throw new Error("Project not found");
+        }
+
+        const milestone = project.milestones.id(milestoneId);
+        if (!milestone) {
+            throw new Error("Milestone not found");
+        }
+
+        // Kiểm tra tất cả task trong milestone
+        const tasks = await Task.find({
+            project: projectId,
+            milestone: milestoneId,
+        });
+
+        const hasIncompleteTask = tasks.some(
+            (task) => task.status !== "completed"
+        );
+
+        if (hasIncompleteTask) {
+            throw new Error(
+                "Cannot complete milestone: there are incomplete tasks"
+            );
+        }
+
+        // Cập nhật status của milestone
+        milestone.status = "completed";
+        milestone.completedAt = new Date();
+        milestone.completedBy = userId;
+        await project.save();
+
+        return milestone;
+    }
+
+    // Xác nhận hoàn thành project
+    static async completeProject(projectId, userId) {
+        const project = await Project.findById(projectId);
+        if (!project) {
+            throw new Error("Project not found");
+        }
+
+        // Kiểm tra tất cả task trong project
+        const tasks = await Task.find({ project: projectId });
+        console.log(
+            "DEBUG TASKS:",
+            tasks.map((t) => ({ id: t._id, title: t.title, status: t.status }))
+        );
+        const hasIncompleteTask = tasks.some(
+            (task) => task.status !== "completed"
+        );
+
+        if (hasIncompleteTask) {
+            throw new Error(
+                "Cannot complete project: there are incomplete tasks"
+            );
+        }
+
+        // Kiểm tra tất cả milestone
+        const hasIncompleteMilestone = project.milestones.some(
+            (milestone) => milestone.status !== "completed"
+        );
+
+        if (hasIncompleteMilestone) {
+            throw new Error(
+                "Cannot complete project: there are incomplete milestones"
+            );
+        }
+
+        // Cập nhật status của project
+        project.status = "close";
+        project.completedAt = new Date();
+        project.completedBy = userId;
+        await project.save();
+
+        return project;
+    }
 }
 
 module.exports = ProjectService;

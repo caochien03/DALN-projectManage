@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const Project = require("./Project");
 
 const taskSchema = new mongoose.Schema(
     {
@@ -80,5 +81,26 @@ const taskSchema = new mongoose.Schema(
         timestamps: true,
     }
 );
+
+// Middleware để kiểm tra và cập nhật status của milestone
+taskSchema.pre("save", async function (next) {
+    if (this.milestone && (this.isNew || this.isModified("status"))) {
+        const project = await Project.findById(this.project);
+        if (!project) {
+            return next(new Error("Project not found"));
+        }
+
+        const milestone = project.milestones.id(this.milestone);
+        if (milestone && milestone.status === "completed") {
+            // Nếu task mới được thêm vào hoặc status thay đổi
+            // và milestone đang ở trạng thái completed
+            milestone.status = "pending";
+            milestone.completedAt = null;
+            milestone.completedBy = null;
+            await project.save();
+        }
+    }
+    next();
+});
 
 module.exports = mongoose.model("Task", taskSchema);

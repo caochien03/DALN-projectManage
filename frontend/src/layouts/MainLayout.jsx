@@ -5,6 +5,7 @@ import {
     BuildingOfficeIcon,
     ClipboardDocumentListIcon,
     ArrowLeftOnRectangleIcon,
+    BellIcon,
 } from "@heroicons/react/24/outline";
 import { logout } from "../services/auth";
 import { toast } from "react-toastify";
@@ -15,6 +16,7 @@ const navigation = [
     { name: "Departments", href: "/departments", icon: BuildingOfficeIcon },
     { name: "Projects", href: "/projects", icon: ClipboardDocumentListIcon },
     { name: "Profile", href: "/profile", icon: UsersIcon },
+    { name: "Notifications", href: "/notifications", icon: BellIcon },
 ];
 
 export default function MainLayout({ children }) {

@@ -26,3 +26,31 @@ export const deleteProject = async (projectId) => {
     const response = await axiosInstance.delete(`/api/projects/${projectId}`);
     return response.data;
 };
+
+// Lấy thông tin chi tiết project
+export const getProjectById = async (id) => {
+    const response = await axiosInstance.get(`/api/projects/${id}`);
+    return response.data;
+};
+
+// Xác nhận hoàn thành project
+export const completeProject = async (id) => {
+    const response = await axiosInstance.put(`/api/projects/${id}/complete`);
+    return response.data;
+};
+
+// Xác nhận hoàn thành milestone
+export const completeMilestone = async (projectId, milestoneId) => {
+    const response = await axiosInstance.put(
+        `/api/projects/${projectId}/milestones/${milestoneId}/complete`
+    );
+    return response.data;
+};
+
+// Kiểm tra tính nhất quán của milestone
+export const checkMilestoneConsistency = async (projectId, milestoneId) => {
+    const response = await axiosInstance.get(
+        `/api/projects/${projectId}/milestones/${milestoneId}/check-consistency`
+    );
+    return response.data;
+};

@@ -168,6 +168,43 @@ class ProjectController {
             res.status(500).json({ message: error.message });
         }
     }
+
+    static async completeProject(req, res) {
+        try {
+            const project = await ProjectService.completeProject(
+                req.params.id,
+                req.user._id
+            );
+            res.json(project);
+        } catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    }
+
+    static async completeMilestone(req, res) {
+        try {
+            const milestone = await ProjectService.completeMilestone(
+                req.params.id,
+                req.params.milestoneId,
+                req.user._id
+            );
+            res.json(milestone);
+        } catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    }
+
+    static async checkMilestoneConsistency(req, res) {
+        try {
+            const result = await ProjectService.checkMilestoneConsistency(
+                req.params.id,
+                req.params.milestoneId
+            );
+            res.json(result);
+        } catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    }
 }
 
 module.exports = ProjectController;

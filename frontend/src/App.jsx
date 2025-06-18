@@ -14,6 +14,7 @@ import Departments from "./pages/Departments";
 import Projects from "./pages/Projects";
 import Profile from "./pages/Profile";
 import ProjectDetail from "./pages/ProjectDetail";
+import NotificationPage from "./pages/NotificationPage";
 
 function PrivateRoute({ children }) {
     const token = localStorage.getItem("token");
@@ -108,6 +109,16 @@ export default function App() {
                         <PrivateRoute>
                             <MainLayout>
                                 <Profile />
+                            </MainLayout>
+                        </PrivateRoute>
+                    }
+                />
+                <Route
+                    path="/notifications"
+                    element={
+                        <PrivateRoute>
+                            <MainLayout>
+                                <NotificationPage />
                             </MainLayout>
                         </PrivateRoute>
                     }

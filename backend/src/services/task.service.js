@@ -19,6 +19,11 @@ class TaskService {
             await user.save();
         }
 
+        // Cập nhật tiến độ dự án
+        if (project) {
+            await project.updateProgress();
+        }
+
         return task;
     }
 
@@ -72,6 +77,15 @@ class TaskService {
             });
 
             await task.save();
+
+            // Cập nhật tiến độ dự án
+            if (task.project) {
+                const project = await Project.findById(task.project);
+                if (project) {
+                    await project.updateProgress();
+                }
+            }
+
             return task;
         } catch (error) {
             throw new Error(error.message);
@@ -125,6 +139,13 @@ class TaskService {
             await User.findByIdAndUpdate(task.assignedTo, {
                 $pull: { tasks: task._id },
             });
+        }
+        // Cập nhật tiến độ dự án
+        if (task.project) {
+            const project = await Project.findById(task.project);
+            if (project) {
+                await project.updateProgress();
+            }
         }
         return task;
     }

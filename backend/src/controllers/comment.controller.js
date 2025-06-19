@@ -29,11 +29,25 @@ exports.getCommentsOfTask = async (req, res) => {
 
 exports.addCommentToProject = async (req, res) => {
     try {
-        const { id: projectId } = req.params;
+        const project = await require("../models/Project").findById(
+            req.params.id
+        );
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+        // Kiểm tra quyền: chỉ cho phép nếu user là thành viên của project hoặc là admin
+        const isMember = project.members.some(
+            (m) => m.user && m.user.equals(req.user._id)
+        );
+        if (!isMember && req.user.role !== "admin") {
+            return res.status(403).json({
+                message: "Bạn không có quyền bình luận vào dự án này",
+            });
+        }
         const { content, mentions } = req.body;
         const author = req.user?._id;
         const comment = await commentService.addComment({
-            project: projectId,
+            project: req.params.id,
             author,
             content,
             mentions,

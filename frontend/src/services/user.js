@@ -23,3 +23,15 @@ export const deleteUser = async (userId) => {
     const response = await axiosInstance.delete(`/api/users/${userId}`);
     return response.data;
 };
+
+// Lấy các project mà user tham gia
+export const getUserProjects = async () => {
+    const response = await axiosInstance.get("/api/users/projects");
+    return response.data;
+};
+
+// Lấy các task của user
+export const getUserTasks = async () => {
+    const response = await axiosInstance.get("/api/users/tasks");
+    return response.data;
+};

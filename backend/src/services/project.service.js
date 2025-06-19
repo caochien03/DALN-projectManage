@@ -121,7 +121,7 @@ class ProjectService {
         project.pendingMembers = project.pendingMembers.filter(
             (id) => !id.equals(userId)
         );
-        project.members.push(userId);
+        project.members.push({ user: userId, role: "member" });
         await project.save();
         return { message: "Member approved successfully" };
     }

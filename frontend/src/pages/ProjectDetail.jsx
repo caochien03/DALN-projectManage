@@ -8,6 +8,8 @@ import {
     completeProject,
     completeMilestone,
     checkMilestoneConsistency,
+    approveMember,
+    rejectMember,
 } from "../services/project";
 import Modal from "../components/Modal";
 import TaskBoard from "../components/TaskBoard";
@@ -246,6 +248,30 @@ export default function ProjectDetail() {
         }
     };
 
+    const handleApprove = async (userId) => {
+        if (!window.confirm("Duyệt thành viên này?")) return;
+        const user = users.find((u) => u._id === userId);
+        console.log("APPROVE userId:", userId, "user:", user);
+        try {
+            await approveMember(id, userId);
+            alert("Đã duyệt thành viên!");
+            fetchData();
+        } catch (err) {
+            alert(err.response?.data?.error || "Không thể duyệt thành viên");
+        }
+    };
+
+    const handleReject = async (userId) => {
+        if (!window.confirm("Từ chối thành viên này?")) return;
+        try {
+            await rejectMember(id, userId);
+            alert("Đã từ chối thành viên!");
+            fetchData();
+        } catch (err) {
+            alert(err.response?.data?.error || "Không thể từ chối thành viên");
+        }
+    };
+
     if (loading) return <div className="p-8">Đang tải...</div>;
     if (error) return <div className="p-8 text-red-500">{error}</div>;
     if (!project) return <div className="p-8">Không tìm thấy project</div>;
@@ -386,6 +412,44 @@ export default function ProjectDetail() {
                 members={projectMembers}
                 currentUser={currentUser}
             />
+
+            {(currentUser.role === "admin" || currentUser.role === "manager") &&
+                project.pendingMembers?.length > 0 && (
+                    <div>
+                        <h3 className="font-semibold mt-4">
+                            Thành viên chờ duyệt:
+                        </h3>
+                        <ul>
+                            {project.pendingMembers.map((userId) => {
+                                const user = users.find(
+                                    (u) => u._id === userId
+                                );
+                                return (
+                                    <li
+                                        key={userId}
+                                        className="flex items-center gap-2"
+                                    >
+                                        {user?.name || userId}
+                                        <button
+                                            onClick={() =>
+                                                handleApprove(userId)
+                                            }
+                                            className="bg-green-600 text-white px-2 py-1 rounded"
+                                        >
+                                            Duyệt
+                                        </button>
+                                        <button
+                                            onClick={() => handleReject(userId)}
+                                            className="bg-red-600 text-white px-2 py-1 rounded"
+                                        >
+                                            Từ chối
+                                        </button>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </div>
+                )}
 
             <Modal
                 isOpen={showTaskModal}

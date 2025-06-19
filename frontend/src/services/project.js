@@ -54,3 +54,24 @@ export const checkMilestoneConsistency = async (projectId, milestoneId) => {
     );
     return response.data;
 };
+
+export const registerForProject = async (projectId) => {
+    const response = await axiosInstance.post(
+        `/api/projects/${projectId}/register`
+    );
+    return response.data;
+};
+
+export const approveMember = async (projectId, userId) => {
+    const response = await axiosInstance.post(
+        `/api/projects/${projectId}/approve/${userId}`
+    );
+    return response.data;
+};
+
+export const rejectMember = async (projectId, userId) => {
+    const response = await axiosInstance.post(
+        `/api/projects/${projectId}/reject/${userId}`
+    );
+    return response.data;
+};

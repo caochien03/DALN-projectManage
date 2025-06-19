@@ -15,6 +15,7 @@ import Projects from "./pages/Projects";
 import Profile from "./pages/Profile";
 import ProjectDetail from "./pages/ProjectDetail";
 import NotificationPage from "./pages/NotificationPage";
+import DashboardMember from "./pages/DashboardMember";
 
 function PrivateRoute({ children }) {
     const token = localStorage.getItem("token");
@@ -123,6 +124,16 @@ export default function App() {
                         </PrivateRoute>
                     }
                 />
+                {/* <Route
+                    path="/dashboard"
+                    element={
+                        <PrivateRoute>
+                            <MainLayout>
+                                <DashboardMember />
+                            </MainLayout>
+                        </PrivateRoute>
+                    }
+                /> */}
             </Routes>
         </Router>
     );

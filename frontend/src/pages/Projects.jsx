@@ -6,12 +6,15 @@ import {
     createProject,
     updateProject,
     deleteProject,
+    registerForProject,
 } from "../services/project";
 import { getAllDepartments } from "../services/department";
 import { getAllUsers } from "../services/user";
 import Modal from "../components/Modal";
 
 const statuses = ["open", "close"];
+
+const currentUser = JSON.parse(localStorage.getItem("user"));
 
 export default function Projects() {
     const [projects, setProjects] = useState([]);
@@ -33,6 +36,9 @@ export default function Projects() {
         milestones: [],
         manager: "",
     });
+    const [showInfoModal, setShowInfoModal] = useState(false);
+    const [selectedProject, setSelectedProject] = useState(null);
+    const [registering, setRegistering] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -137,10 +143,6 @@ export default function Projects() {
         }
     };
 
-    const getProjectsByStatus = (status) => {
-        return projects.filter((project) => project.status === status);
-    };
-
     // Lọc user theo department đã chọn
     const filteredUsers = users.filter((user) =>
         formData.departments.includes(user.department?._id || user.department)
@@ -157,6 +159,66 @@ export default function Projects() {
         // eslint-disable-next-line
     }, [formData.departments]);
 
+    // Lọc project theo department của user
+    const filteredProjects =
+        currentUser.role === "admin"
+            ? projects
+            : projects.filter((project) =>
+                  project.departments?.some(
+                      (dep) =>
+                          (typeof dep === "object" ? dep._id : dep) ===
+                          (currentUser.department?._id ||
+                              currentUser.department)
+                  )
+              );
+
+    // Chỉ cho phép admin/manager thêm/sửa/xóa project
+    const canEdit =
+        currentUser.role === "admin" || currentUser.role === "manager";
+
+    const handleProjectClick = (project) => {
+        if (currentUser.role === "admin" || currentUser.role === "manager") {
+            navigate(`/projects/${project._id}`);
+            return;
+        }
+        const isMember = project.members?.some(
+            (m) => (m.user?._id || m.user) === currentUser._id
+        );
+        const isPending = project.pendingMembers?.includes(currentUser._id);
+        if (isMember || isPending) {
+            navigate(`/projects/${project._id}`);
+        } else {
+            setSelectedProject(project);
+            setShowInfoModal(true);
+        }
+    };
+
+    const handleRegister = async () => {
+        if (!selectedProject) return;
+        setRegistering(true);
+        try {
+            await registerForProject(selectedProject._id);
+            alert("Đã gửi yêu cầu đăng ký, chờ duyệt!");
+            setShowInfoModal(false);
+        } catch (err) {
+            alert(
+                err.response?.data?.error || "Không thể đăng ký tham gia dự án"
+            );
+        } finally {
+            setRegistering(false);
+        }
+    };
+
+    const getProjectType = (project) => {
+        const isMember = project.members?.some(
+            (m) => (m.user?._id || m.user) === currentUser._id
+        );
+        const isPending = project.pendingMembers?.includes(currentUser._id);
+        if (isMember) return "member";
+        if (isPending) return "pending";
+        return "not-registered";
+    };
+
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="sm:flex sm:items-center">
@@ -168,31 +230,33 @@ export default function Projects() {
                         A list of all projects in your organization
                     </p>
                 </div>
-                <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setEditingProject(null);
-                            setFormData({
-                                name: "",
-                                description: "",
-                                status: "open",
-                                progress: 0,
-                                startDate: "",
-                                endDate: "",
-                                departments: [],
-                                members: [],
-                                milestones: [],
-                                manager: "",
-                            });
-                            setShowForm(true);
-                        }}
-                        className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
-                    >
-                        <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
-                        Add project
-                    </button>
-                </div>
+                {canEdit && (
+                    <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setEditingProject(null);
+                                setFormData({
+                                    name: "",
+                                    description: "",
+                                    status: "open",
+                                    progress: 0,
+                                    startDate: "",
+                                    endDate: "",
+                                    departments: [],
+                                    members: [],
+                                    milestones: [],
+                                    manager: "",
+                                });
+                                setShowForm(true);
+                            }}
+                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+                        >
+                            <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+                            Add project
+                        </button>
+                    </div>
+                )}
             </div>
 
             {error && (
@@ -484,47 +548,132 @@ export default function Projects() {
                                 {status.replace("_", " ")}
                             </h3>
                             <div className="space-y-4">
-                                {getProjectsByStatus(status).map((project) => (
-                                    <div
-                                        key={project.id}
-                                        className="bg-white p-4 rounded-lg shadow cursor-pointer hover:bg-gray-100"
-                                        onClick={() =>
-                                            navigate(`/projects/${project._id}`)
-                                        }
-                                    >
-                                        <h4 className="font-medium text-gray-900">
-                                            {project.name}
-                                        </h4>
-                                        <p className="text-sm text-gray-500 mt-1">
-                                            {project.description}
-                                        </p>
-                                        <div className="mt-4 flex justify-end space-x-2">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleEdit(project);
-                                                }}
-                                                className="text-indigo-600 hover:text-indigo-900"
-                                            >
-                                                <PencilIcon className="h-5 w-5" />
-                                            </button>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDelete(project.id);
-                                                }}
-                                                className="text-red-600 hover:text-red-900"
-                                            >
-                                                <TrashIcon className="h-5 w-5" />
-                                            </button>
+                                {filteredProjects
+                                    .filter((p) => p.status === status)
+                                    .map((project) => (
+                                        <div
+                                            key={project._id}
+                                            className="bg-white p-4 rounded-lg shadow cursor-pointer hover:bg-gray-100"
+                                            onClick={() =>
+                                                handleProjectClick(project)
+                                            }
+                                        >
+                                            <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                                                {project.name}
+                                                {currentUser.role ===
+                                                    "member" && (
+                                                    <>
+                                                        {getProjectType(
+                                                            project
+                                                        ) === "member" && (
+                                                            <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">
+                                                                Thành viên
+                                                            </span>
+                                                        )}
+                                                        {getProjectType(
+                                                            project
+                                                        ) === "pending" && (
+                                                            <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs">
+                                                                Chờ duyệt
+                                                            </span>
+                                                        )}
+                                                        {getProjectType(
+                                                            project
+                                                        ) ===
+                                                            "not-registered" && (
+                                                            <span className="ml-2 px-2 py-0.5 bg-gray-200 text-gray-700 rounded text-xs">
+                                                                Chưa đăng ký
+                                                            </span>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </h4>
+                                            <p className="text-sm text-gray-500 mt-1">
+                                                {project.description}
+                                            </p>
+                                            {canEdit && (
+                                                <div className="mt-4 flex justify-end space-x-2">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleEdit(project);
+                                                        }}
+                                                        className="text-indigo-600 hover:text-indigo-900"
+                                                    >
+                                                        <PencilIcon className="h-5 w-5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDelete(
+                                                                project._id
+                                                            );
+                                                        }}
+                                                        className="text-red-600 hover:text-red-900"
+                                                    >
+                                                        <TrashIcon className="h-5 w-5" />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
-                                ))}
+                                    ))}
                             </div>
                         </div>
                     ))}
                 </div>
             </div>
+
+            <Modal
+                isOpen={showInfoModal}
+                onClose={() => setShowInfoModal(false)}
+                title="Thông tin dự án"
+            >
+                {selectedProject && (
+                    <div className="space-y-2">
+                        <div>
+                            <b>Tên dự án:</b> {selectedProject.name}
+                        </div>
+                        <div>
+                            <b>Mô tả:</b> {selectedProject.description}
+                        </div>
+                        <div>
+                            <b>Ngày kết thúc:</b>{" "}
+                            {selectedProject.endDate?.slice(0, 10)}
+                        </div>
+                        <div>
+                            <b>Quản lý:</b>{" "}
+                            {users.find(
+                                (u) =>
+                                    u._id ===
+                                    (selectedProject.manager?._id ||
+                                        selectedProject.manager)
+                            )?.name || "Chưa có"}
+                        </div>
+                        <div>
+                            <b>Milestones:</b>
+                            <ul className="list-disc ml-5">
+                                {selectedProject.milestones?.length > 0 ? (
+                                    selectedProject.milestones.map((m, idx) => (
+                                        <li key={idx}>
+                                            {m.name} - {m.status} -{" "}
+                                            {m.dueDate?.slice(0, 10)}
+                                        </li>
+                                    ))
+                                ) : (
+                                    <li>Chưa có milestone nào</li>
+                                )}
+                            </ul>
+                        </div>
+                        <button
+                            onClick={handleRegister}
+                            disabled={registering}
+                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                        >
+                            {registering ? "Đang gửi..." : "Đăng ký tham gia"}
+                        </button>
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 }

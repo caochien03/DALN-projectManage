@@ -22,6 +22,15 @@ const navigation = [
 export default function MainLayout({ children }) {
     const navigate = useNavigate();
     const location = useLocation();
+    const currentUser = JSON.parse(localStorage.getItem("user"));
+
+    // Lọc menu cho member
+    const filteredNavigation =
+        currentUser?.role === "member"
+            ? navigation.filter(
+                  (item) => item.name !== "Users" && item.name !== "Departments"
+              )
+            : navigation;
 
     const handleLogout = async () => {
         await logout();
@@ -41,7 +50,7 @@ export default function MainLayout({ children }) {
                     </div>
 
                     <nav className="flex-1 px-4 py-4 space-y-1">
-                        {navigation.map((item) => {
+                        {filteredNavigation.map((item) => {
                             const isActive = location.pathname === item.href;
                             return (
                                 <Link

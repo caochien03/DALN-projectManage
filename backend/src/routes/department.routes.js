@@ -2,13 +2,13 @@ const express = require("express");
 const router = express.Router();
 const DepartmentController = require("../controllers/department.controller");
 const auth = require("../middleware/auth");
-const { checkRole } = require("../middleware/checkRole");
+const authorize = require("../middleware/authorize");
 
 // Create department (admin only)
 router.post(
     "/",
     auth,
-    checkRole(["admin"]),
+    authorize(["admin"]),
     DepartmentController.createDepartment
 );
 
@@ -22,7 +22,7 @@ router.get("/:id", auth, DepartmentController.getDepartmentById);
 router.put(
     "/:id",
     auth,
-    checkRole(["admin"]),
+    authorize(["admin"]),
     DepartmentController.updateDepartment
 );
 
@@ -30,7 +30,7 @@ router.put(
 router.delete(
     "/:id",
     auth,
-    checkRole(["admin"]),
+    authorize(["admin"]),
     DepartmentController.deleteDepartment
 );
 
@@ -41,7 +41,7 @@ router.get("/:id/members", auth, DepartmentController.getDepartmentMembers);
 router.post(
     "/:id/manager",
     auth,
-    checkRole(["admin"]),
+    authorize(["admin"]),
     DepartmentController.assignManager
 );
 

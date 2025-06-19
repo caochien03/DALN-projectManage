@@ -35,33 +35,27 @@ class TaskController {
     }
 
     static async updateTask(req, res) {
-        const updates = Object.keys(req.body);
-        const allowedUpdates = [
-            "title",
-            "description",
-            "status",
-            "priority",
-            "startDate",
-            "dueDate",
-            "progress",
-            "assignedTo",
-            "milestone",
-            "project",
-        ];
-        const isValidOperation = updates.every((update) =>
-            allowedUpdates.includes(update)
-        );
-
-        if (!isValidOperation) {
-            return res.status(400).json({ error: "Invalid updates" });
-        }
-
         try {
-            const task = await TaskService.updateTask(req.params.id, req.body);
+            const task = await TaskService.getTaskById(req.params.id);
             if (!task) {
                 return res.status(404).json({ error: "Task not found" });
             }
-            res.json(task);
+            // Kiểm tra quyền: chỉ cho phép nếu user là người được giao task hoặc là admin
+            if (
+                task.assignedTo &&
+                task.assignedTo._id &&
+                !task.assignedTo._id.equals(req.user._id) &&
+                req.user.role !== "admin"
+            ) {
+                return res
+                    .status(403)
+                    .json({ error: "Bạn chỉ có thể cập nhật task của mình" });
+            }
+            const updatedTask = await TaskService.updateTask(
+                req.params.id,
+                req.body
+            );
+            res.json(updatedTask);
         } catch (error) {
             res.status(400).json({ error: error.message });
         }

@@ -33,13 +33,27 @@ class AuthService {
                 address: user.address,
                 department: user.department,
                 avatar: user.avatar,
+                linkedin: user.linkedin,
+                twitter: user.twitter,
+                github: user.github,
             },
         };
     }
 
     // Register
     async register(userData) {
-        const { name, email, password, position, phone, address } = userData;
+        const {
+            name,
+            email,
+            password,
+            position,
+            phone,
+            address,
+            avatar,
+            linkedin,
+            twitter,
+            github,
+        } = userData;
 
         let user = await User.findOne({ email });
         if (user) {
@@ -53,7 +67,11 @@ class AuthService {
             position,
             phone,
             address,
-            role: "member", // Default role
+            avatar,
+            linkedin,
+            twitter,
+            github,
+            role: "member",
         });
 
         await user.save();
@@ -72,6 +90,10 @@ class AuthService {
                 position: user.position,
                 phone: user.phone,
                 address: user.address,
+                avatar: user.avatar,
+                linkedin: user.linkedin,
+                twitter: user.twitter,
+                github: user.github,
             },
         };
     }
@@ -88,19 +110,42 @@ class AuthService {
             throw new Error("User not found");
         }
 
-        return user;
+        return {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            position: user.position,
+            phone: user.phone,
+            address: user.address,
+            department: user.department,
+            avatar: user.avatar,
+            linkedin: user.linkedin,
+            twitter: user.twitter,
+            github: user.github,
+        };
     }
 
     // Update profile
     async updateProfile(userId, updateData) {
-        const { name, email, position, phone, address } = updateData;
+        const {
+            name,
+            email,
+            position,
+            phone,
+            address,
+            avatar,
+            linkedin,
+            twitter,
+            github,
+        } = updateData;
+
         const user = await User.findById(userId);
 
         if (!user) {
             throw new Error("User not found");
         }
 
-        // Check if email is being changed and if it's already taken
         if (email && email !== user.email) {
             const existingUser = await User.findOne({ email });
             if (existingUser) {
@@ -113,6 +158,10 @@ class AuthService {
         user.position = position || user.position;
         user.phone = phone || user.phone;
         user.address = address || user.address;
+        user.avatar = avatar || user.avatar;
+        user.linkedin = linkedin || user.linkedin;
+        user.twitter = twitter || user.twitter;
+        user.github = github || user.github;
 
         await user.save();
 
@@ -126,6 +175,9 @@ class AuthService {
             address: user.address,
             department: user.department,
             avatar: user.avatar,
+            linkedin: user.linkedin,
+            twitter: user.twitter,
+            github: user.github,
         };
     }
 
@@ -156,13 +208,11 @@ class AuthService {
             throw new Error("User not found");
         }
 
-        // Generate reset token
         const resetToken = crypto.randomBytes(32).toString("hex");
         user.resetPasswordToken = resetToken;
         user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
         await user.save();
 
-        // Send reset email
         await sendPasswordResetEmail(email, resetToken);
 
         return { message: "Password reset email sent" };

@@ -317,7 +317,7 @@ export default function Profile() {
                         </div>
                     ))}
 
-                    {/* Liên kết mạng xã hội */}
+                    {/* Liên kết MXH */}
                     <div className="md:col-span-2 bg-gray-50 p-4 rounded-lg border mt-4">
                         <h3 className="text-base font-semibold text-gray-700 mb-3 flex items-center gap-2">
                             <span>🖋️</span> Liên kết mạng xã hội

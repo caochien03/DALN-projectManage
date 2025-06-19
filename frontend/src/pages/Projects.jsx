@@ -1,3 +1,4 @@
+import React from "react";
 import { useState, useEffect } from "react";
 import { PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +11,16 @@ import {
 import { getAllDepartments } from "../services/department";
 import { getAllUsers } from "../services/user";
 import Modal from "../components/Modal";
+import ChartComponent from "../components/ChartComponent";
+
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from "recharts";
 
 const statuses = ["open", "close"];
 
@@ -41,7 +52,13 @@ export default function Projects() {
         fetchUsers();
     }, []);
 
-    const fetchProjects = async () => {
+    const [selectedProject, setSelectedProject] = useState(null);
+
+    const handleSelect = (project) => {
+    setSelectedProject(project); // Lưu dự án khi được chọn
+};
+
+    async function fetchProjects() {
         setIsLoading(true);
         try {
             const data = await getAllProjects();
@@ -51,7 +68,7 @@ export default function Projects() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }
 
     const fetchDepartments = async () => {
         try {
@@ -488,9 +505,10 @@ export default function Projects() {
                                     <div
                                         key={project.id}
                                         className="bg-white p-4 rounded-lg shadow cursor-pointer hover:bg-gray-100"
-                                        onClick={() =>
+                                        onDoubleClick={() =>
                                             navigate(`/projects/${project._id}`)
                                         }
+                                        onClick={() => handleSelect(project)} // Thêm dòng này
                                     >
                                         <h4 className="font-medium text-gray-900">
                                             {project.name}
@@ -523,6 +541,25 @@ export default function Projects() {
                             </div>
                         </div>
                     ))}
+                        {/* Cột 3-4 gộp lại thành một để hiển thị biểu đồ */}
+        <div className="col-span-2 bg-white p-6 rounded-lg shadow">
+  {selectedProject ? (
+    <>
+      <h3 className="text-xl font-semibold text-gray-900 mb-4">
+        Biểu đồ cho: {selectedProject.name}
+      </h3>
+      <div className="h-64">
+        {/* ✅ Chèn biểu đồ ở đây */}
+        <ChartComponent project={selectedProject} />
+      </div>
+    </>
+  ) : (
+    <p className="text-gray-500 text-center mt-24">
+      Chọn một dự án để xem biểu đồ
+    </p>
+  )}
+</div>
+                    
                 </div>
             </div>
         </div>

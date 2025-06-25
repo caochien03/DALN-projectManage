@@ -95,4 +95,28 @@ router.get(
     ProjectController.checkMilestoneConsistency
 );
 
+// Tạo milestone mới
+router.post(
+    "/:id/milestones",
+    auth,
+    authorize(["admin", "manager"]),
+    ProjectController.createMilestone
+);
+
+// Cập nhật milestone
+router.put(
+    "/:id/milestones/:milestoneId",
+    auth,
+    authorize(["admin", "manager"]),
+    ProjectController.updateMilestone
+);
+
+// Xóa milestone
+router.delete(
+    "/:id/milestones/:milestoneId",
+    auth,
+    authorize(["admin", "manager"]),
+    ProjectController.deleteMilestone
+);
+
 module.exports = router;

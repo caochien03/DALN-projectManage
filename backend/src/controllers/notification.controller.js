@@ -24,6 +24,18 @@ const getNotificationsByUser = async (req, res) => {
     }
 };
 
+// Lấy tất cả thông báo của user hiện tại
+const getCurrentUserNotifications = async (req, res) => {
+    try {
+        const notifications = await notificationService.getNotificationsByUser(
+            req.user._id
+        );
+        res.status(200).json(notifications);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // Đánh dấu thông báo là đã đọc
 const markNotificationAsRead = async (req, res) => {
     try {
@@ -49,6 +61,7 @@ const deleteNotification = async (req, res) => {
 module.exports = {
     createNotification,
     getNotificationsByUser,
+    getCurrentUserNotifications,
     markNotificationAsRead,
     deleteNotification,
 };

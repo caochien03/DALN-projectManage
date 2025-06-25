@@ -20,6 +20,7 @@ const dashboardRoutes = require("./routes/dashboard.routes");
 const departmentRoutes = require("./routes/department.routes");
 const documentRoutes = require("./routes/document.route");
 const commentRoutes = require("./routes/comment.route");
+const notificationRoutes = require("./routes/notification.routes");
 
 app.use("/api/projects", projectRoutes);
 app.use("/api/tasks", taskRoutes);
@@ -29,11 +30,18 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/departments", departmentRoutes);
 app.use("/api", documentRoutes);
 app.use("/api", commentRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Connect to MongoDB
 mongoose
     .connect(process.env.MONGODB_URI)
-    .then(() => console.log("Connected to MongoDB"))
+    .then(() => {
+        console.log("Connected to MongoDB");
+
+        // Khởi tạo notification scheduler
+        const NotificationScheduler = require("./services/notificationScheduler");
+        NotificationScheduler.init();
+    })
     .catch((err) => console.error("MongoDB connection error:", err));
 
 // Basic route

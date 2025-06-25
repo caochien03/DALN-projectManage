@@ -39,3 +39,9 @@ export const deleteDocument = async (docId) => {
     const res = await axiosInstance.delete(`/api/documents/${docId}`);
     return res.data;
 };
+
+// Lấy document detail theo ID
+export const getDocumentById = async (docId) => {
+    const response = await axiosInstance.get(`/api/documents/${docId}`);
+    return response.data;
+};

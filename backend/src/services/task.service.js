@@ -1,6 +1,7 @@
 const Task = require("../models/Task");
 const Project = require("../models/Project");
 const User = require("../models/User");
+const notificationService = require("./notification.service");
 
 class TaskService {
     static async createTask(taskData) {
@@ -17,6 +18,15 @@ class TaskService {
             const user = await User.findById(task.assignedTo);
             user.tasks.push(task._id);
             await user.save();
+
+            // Tạo thông báo cho user được giao task
+            await notificationService.createNotification({
+                user: task.assignedTo,
+                type: "task_assigned",
+                message: `Bạn đã được giao task mới: ${task.title}`,
+                relatedTo: task._id,
+                onModel: "Task",
+            });
         }
 
         // Cập nhật tiến độ dự án
@@ -48,6 +58,9 @@ class TaskService {
                 return null;
             }
 
+            const oldStatus = task.status;
+            const oldAssignedTo = task.assignedTo;
+
             // Handle date fields
             if (updates.startDate) {
                 updates.startDate = new Date(updates.startDate);
@@ -77,6 +90,32 @@ class TaskService {
             });
 
             await task.save();
+
+            // Tạo thông báo cho cập nhật trạng thái
+            if (
+                updates.status &&
+                updates.status !== oldStatus &&
+                task.assignedTo
+            ) {
+                await notificationService.createNotification({
+                    user: task.assignedTo,
+                    type: "task_status_update",
+                    message: `Task "${task.title}" đã được cập nhật trạng thái thành ${updates.status}`,
+                    relatedTo: task._id,
+                    onModel: "Task",
+                });
+            }
+
+            // Tạo thông báo cho việc giao task mới
+            if (updates.assignedTo && updates.assignedTo !== oldAssignedTo) {
+                await notificationService.createNotification({
+                    user: updates.assignedTo,
+                    type: "task_assigned",
+                    message: `Bạn đã được giao task: ${task.title}`,
+                    relatedTo: task._id,
+                    onModel: "Task",
+                });
+            }
 
             // Cập nhật tiến độ dự án
             if (task.project) {

@@ -32,4 +32,7 @@ router.get(
 // Xóa tài liệu (xóa mềm)
 router.delete("/documents/:docId", auth, documentController.deleteDocument);
 
+// Lấy document detail theo ID
+router.get("/documents/:docId", auth, documentController.getDocumentById);
+
 module.exports = router;

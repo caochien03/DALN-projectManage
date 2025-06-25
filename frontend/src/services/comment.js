@@ -32,3 +32,29 @@ export const deleteComment = async (commentId) => {
     const res = await axiosInstance.delete(`/api/comments/${commentId}`);
     return res.data;
 };
+
+// Lấy comment detail theo ID
+export const getCommentById = async (commentId) => {
+    const response = await axiosInstance.get(`/api/comments/${commentId}`);
+    return response.data;
+};
+
+// Lấy comments theo project
+export const getCommentsByProject = async (projectId) => {
+    const response = await axiosInstance.get(
+        `/api/comments/project/${projectId}`
+    );
+    return response.data;
+};
+
+// Lấy comments theo task
+export const getCommentsByTask = async (taskId) => {
+    const response = await axiosInstance.get(`/api/comments/task/${taskId}`);
+    return response.data;
+};
+
+// Thêm comment mới
+export const addComment = async (commentData) => {
+    const response = await axiosInstance.post("/api/comments", commentData);
+    return response.data;
+};

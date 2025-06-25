@@ -1,6 +1,7 @@
 const Project = require("../models/Project");
 const Task = require("../models/Task");
 const User = require("../models/User");
+const notificationService = require("./notification.service");
 
 class ProjectService {
     static async createProject(projectData) {
@@ -43,6 +44,16 @@ class ProjectService {
 
         project.members.push(memberData);
         await project.save();
+
+        // Tạo thông báo cho user được thêm vào project
+        await notificationService.createNotification({
+            user: memberData.user,
+            type: "added_to_project",
+            message: `Bạn đã được thêm vào dự án: ${project.name}`,
+            relatedTo: project._id,
+            onModel: "Project",
+        });
+
         return project;
     }
 
@@ -123,6 +134,16 @@ class ProjectService {
         );
         project.members.push({ user: userId, role: "member" });
         await project.save();
+
+        // Tạo thông báo cho user được duyệt
+        await notificationService.createNotification({
+            user: userId,
+            type: "added_to_project",
+            message: `Yêu cầu tham gia dự án "${project.name}" đã được duyệt`,
+            relatedTo: project._id,
+            onModel: "Project",
+        });
+
         return { message: "Member approved successfully" };
     }
 
@@ -267,6 +288,98 @@ class ProjectService {
         await project.save();
 
         return project;
+    }
+
+    // Tạo milestone mới cho project
+    static async createMilestone(projectId, milestoneData) {
+        const project = await Project.findById(projectId);
+        if (!project) {
+            throw new Error("Project not found");
+        }
+
+        // Thêm milestone mới vào project
+        project.milestones.push({
+            name: milestoneData.name,
+            description: milestoneData.description,
+            dueDate: milestoneData.dueDate,
+            status: "pending",
+        });
+
+        await project.save();
+
+        // Tạo thông báo cho tất cả thành viên project
+        const memberIds = project.members.map((member) => member.user);
+        await Promise.all(
+            memberIds.map((userId) =>
+                notificationService.createNotification({
+                    user: userId,
+                    type: "milestone_created",
+                    message: `Milestone mới "${milestoneData.name}" đã được tạo trong dự án ${project.name}`,
+                    relatedTo: project._id,
+                    onModel: "Project",
+                })
+            )
+        );
+
+        return project;
+    }
+
+    // Cập nhật milestone
+    static async updateMilestone(projectId, milestoneId, updateData) {
+        const project = await Project.findById(projectId);
+        if (!project) {
+            throw new Error("Project not found");
+        }
+
+        const milestone = project.milestones.id(milestoneId);
+        if (!milestone) {
+            throw new Error("Milestone not found");
+        }
+
+        // Cập nhật thông tin milestone
+        Object.keys(updateData).forEach((key) => {
+            if (
+                key !== "status" &&
+                key !== "completedAt" &&
+                key !== "completedBy"
+            ) {
+                milestone[key] = updateData[key];
+            }
+        });
+
+        await project.save();
+        return milestone;
+    }
+
+    // Xóa milestone
+    static async deleteMilestone(projectId, milestoneId) {
+        const project = await Project.findById(projectId);
+        if (!project) {
+            throw new Error("Project not found");
+        }
+
+        const milestone = project.milestones.id(milestoneId);
+        if (!milestone) {
+            throw new Error("Milestone not found");
+        }
+
+        // Kiểm tra xem có task nào đang sử dụng milestone này không
+        const tasksUsingMilestone = await Task.find({
+            project: projectId,
+            milestone: milestoneId,
+        });
+
+        if (tasksUsingMilestone.length > 0) {
+            throw new Error(
+                "Không thể xóa milestone: có task đang sử dụng milestone này"
+            );
+        }
+
+        // Xóa milestone
+        project.milestones.pull(milestoneId);
+        await project.save();
+
+        return { message: "Milestone deleted successfully" };
     }
 }
 

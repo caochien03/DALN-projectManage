@@ -75,3 +75,33 @@ export const rejectMember = async (projectId, userId) => {
     );
     return response.data;
 };
+
+// Tạo milestone mới
+export const createMilestone = async (projectId, milestoneData) => {
+    const response = await axiosInstance.post(
+        `/api/projects/${projectId}/milestones`,
+        milestoneData
+    );
+    return response.data;
+};
+
+// Cập nhật milestone
+export const updateMilestone = async (
+    projectId,
+    milestoneId,
+    milestoneData
+) => {
+    const response = await axiosInstance.put(
+        `/api/projects/${projectId}/milestones/${milestoneId}`,
+        milestoneData
+    );
+    return response.data;
+};
+
+// Xóa milestone
+export const deleteMilestone = async (projectId, milestoneId) => {
+    const response = await axiosInstance.delete(
+        `/api/projects/${projectId}/milestones/${milestoneId}`
+    );
+    return response.data;
+};

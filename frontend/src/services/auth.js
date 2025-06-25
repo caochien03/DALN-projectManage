@@ -7,12 +7,16 @@ export const login = async (email, password) => {
         password,
     });
     localStorage.setItem("token", response.data.token);
+    // Dispatch event để thông báo token đã thay đổi
+    window.dispatchEvent(new Event("tokenChanged"));
     return response.data;
 };
 
 // Logout
 export const logout = () => {
     localStorage.removeItem("token");
+    // Dispatch event để thông báo token đã thay đổi
+    window.dispatchEvent(new Event("tokenChanged"));
 };
 
 // Change Password

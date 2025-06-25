@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { logout } from "../services/auth";
 import { toast } from "react-toastify";
+import NotificationBell from "../components/NotificationBell";
 
 const navigation = [
     { name: "Dashboard", href: "/", icon: HomeIcon },
@@ -83,6 +84,27 @@ export default function MainLayout({ children }) {
 
             {/* Main content */}
             <div className="pl-64">
+                {/* Header */}
+                <header className="bg-white shadow-sm border-b border-gray-200">
+                    <div className="flex items-center justify-between px-8 py-4">
+                        <div className="flex items-center space-x-4">
+                            <h2 className="text-lg font-semibold text-gray-900">
+                                {filteredNavigation.find(
+                                    (item) => item.href === location.pathname
+                                )?.name || "Dashboard"}
+                            </h2>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                            {currentUser && <NotificationBell />}
+                            <div className="flex items-center space-x-2">
+                                <span className="text-sm text-gray-700">
+                                    {currentUser?.name || currentUser?.email}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
                 <main className="p-8">{children}</main>
             </div>
         </div>

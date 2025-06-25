@@ -16,6 +16,7 @@ import Profile from "./pages/Profile";
 import ProjectDetail from "./pages/ProjectDetail";
 import NotificationPage from "./pages/NotificationPage";
 import DashboardMember from "./pages/DashboardMember";
+import { NotificationProvider } from "./components/NotificationProvider";
 
 function PrivateRoute({ children }) {
     const token = localStorage.getItem("token");
@@ -40,101 +41,103 @@ export default function App() {
 
     return (
         <Router>
-            <ToastContainer
-                position="top-right"
-                autoClose={3000}
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="light"
-            />
-            <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route
-                    path="/"
-                    element={
-                        <PrivateRoute>
-                            <MainLayout>
-                                <Projects />
-                            </MainLayout>
-                        </PrivateRoute>
-                    }
+            <NotificationProvider>
+                <ToastContainer
+                    position="top-right"
+                    autoClose={3000}
+                    hideProgressBar={false}
+                    newestOnTop
+                    closeOnClick
+                    rtl={false}
+                    pauseOnFocusLoss
+                    draggable
+                    pauseOnHover
+                    theme="light"
                 />
-                <Route
-                    path="/users"
-                    element={
-                        <PrivateRoute>
-                            <MainLayout>
-                                <Users />
-                            </MainLayout>
-                        </PrivateRoute>
-                    }
-                />
-                <Route
-                    path="/departments"
-                    element={
-                        <PrivateRoute>
-                            <MainLayout>
-                                <Departments />
-                            </MainLayout>
-                        </PrivateRoute>
-                    }
-                />
-                <Route
-                    path="/projects"
-                    element={
-                        <PrivateRoute>
-                            <MainLayout>
-                                <Projects />
-                            </MainLayout>
-                        </PrivateRoute>
-                    }
-                />
-                <Route
-                    path="/projects/:id"
-                    element={
-                        <PrivateRoute>
-                            <MainLayout>
-                                <ProjectDetail />
-                            </MainLayout>
-                        </PrivateRoute>
-                    }
-                />
-                <Route
-                    path="/profile"
-                    element={
-                        <PrivateRoute>
-                            <MainLayout>
-                                <Profile />
-                            </MainLayout>
-                        </PrivateRoute>
-                    }
-                />
-                <Route
-                    path="/notifications"
-                    element={
-                        <PrivateRoute>
-                            <MainLayout>
-                                <NotificationPage />
-                            </MainLayout>
-                        </PrivateRoute>
-                    }
-                />
-                {/* <Route
-                    path="/dashboard"
-                    element={
-                        <PrivateRoute>
-                            <MainLayout>
-                                <DashboardMember />
-                            </MainLayout>
-                        </PrivateRoute>
-                    }
-                /> */}
-            </Routes>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route
+                        path="/"
+                        element={
+                            <PrivateRoute>
+                                <MainLayout>
+                                    <Projects />
+                                </MainLayout>
+                            </PrivateRoute>
+                        }
+                    />
+                    <Route
+                        path="/users"
+                        element={
+                            <PrivateRoute>
+                                <MainLayout>
+                                    <Users />
+                                </MainLayout>
+                            </PrivateRoute>
+                        }
+                    />
+                    <Route
+                        path="/departments"
+                        element={
+                            <PrivateRoute>
+                                <MainLayout>
+                                    <Departments />
+                                </MainLayout>
+                            </PrivateRoute>
+                        }
+                    />
+                    <Route
+                        path="/projects"
+                        element={
+                            <PrivateRoute>
+                                <MainLayout>
+                                    <Projects />
+                                </MainLayout>
+                            </PrivateRoute>
+                        }
+                    />
+                    <Route
+                        path="/projects/:id"
+                        element={
+                            <PrivateRoute>
+                                <MainLayout>
+                                    <ProjectDetail />
+                                </MainLayout>
+                            </PrivateRoute>
+                        }
+                    />
+                    <Route
+                        path="/profile"
+                        element={
+                            <PrivateRoute>
+                                <MainLayout>
+                                    <Profile />
+                                </MainLayout>
+                            </PrivateRoute>
+                        }
+                    />
+                    <Route
+                        path="/notifications"
+                        element={
+                            <PrivateRoute>
+                                <MainLayout>
+                                    <NotificationPage />
+                                </MainLayout>
+                            </PrivateRoute>
+                        }
+                    />
+                    {/* <Route
+                        path="/dashboard"
+                        element={
+                            <PrivateRoute>
+                                <MainLayout>
+                                    <DashboardMember />
+                                </MainLayout>
+                            </PrivateRoute>
+                        }
+                    /> */}
+                </Routes>
+            </NotificationProvider>
         </Router>
     );
 }

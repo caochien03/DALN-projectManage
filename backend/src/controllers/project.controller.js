@@ -214,6 +214,46 @@ class ProjectController {
             res.status(400).json({ error: error.message });
         }
     }
+
+    // Tạo milestone mới
+    static async createMilestone(req, res) {
+        try {
+            const project = await ProjectService.createMilestone(
+                req.params.id,
+                req.body
+            );
+            res.status(201).json(project);
+        } catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    }
+
+    // Cập nhật milestone
+    static async updateMilestone(req, res) {
+        try {
+            const milestone = await ProjectService.updateMilestone(
+                req.params.id,
+                req.params.milestoneId,
+                req.body
+            );
+            res.json(milestone);
+        } catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    }
+
+    // Xóa milestone
+    static async deleteMilestone(req, res) {
+        try {
+            const result = await ProjectService.deleteMilestone(
+                req.params.id,
+                req.params.milestoneId
+            );
+            res.json(result);
+        } catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    }
 }
 
 module.exports = ProjectController;

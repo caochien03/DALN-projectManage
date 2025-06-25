@@ -591,6 +591,25 @@ export default function Projects() {
                                             <p className="text-sm text-gray-500 mt-1">
                                                 {project.description}
                                             </p>
+                                            <p className="text-sm text-blue-600 mt-1">
+                                                <strong>
+                                                    Kết thúc dự kiến:
+                                                </strong>{" "}
+                                                {project.endDate?.slice(0, 10)}
+                                            </p>
+                                            {project.status === "close" &&
+                                                project.completedAt && (
+                                                    <p className="text-sm text-green-600 mt-1">
+                                                        <strong>
+                                                            Kết thúc thực tế:
+                                                        </strong>{" "}
+                                                        {new Date(
+                                                            project.completedAt
+                                                        ).toLocaleDateString(
+                                                            "vi-VN"
+                                                        )}
+                                                    </p>
+                                                )}
                                             {canEdit && (
                                                 <div className="mt-4 flex justify-end space-x-2">
                                                     <button
@@ -637,9 +656,18 @@ export default function Projects() {
                             <b>Mô tả:</b> {selectedProject.description}
                         </div>
                         <div>
-                            <b>Ngày kết thúc:</b>{" "}
+                            <b>Ngày kết thúc dự kiến:</b>{" "}
                             {selectedProject.endDate?.slice(0, 10)}
                         </div>
+                        {selectedProject.status === "close" &&
+                            selectedProject.completedAt && (
+                                <div>
+                                    <b>Ngày kết thúc thực tế:</b>{" "}
+                                    {new Date(
+                                        selectedProject.completedAt
+                                    ).toLocaleDateString("vi-VN")}
+                                </div>
+                            )}
                         <div>
                             <b>Quản lý:</b>{" "}
                             {users.find(

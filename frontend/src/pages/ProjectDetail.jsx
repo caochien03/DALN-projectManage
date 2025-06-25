@@ -10,6 +10,9 @@ import {
     checkMilestoneConsistency,
     approveMember,
     rejectMember,
+    createMilestone,
+    updateMilestone,
+    deleteMilestone,
 } from "../services/project";
 import Modal from "../components/Modal";
 import TaskBoard from "../components/TaskBoard";
@@ -40,6 +43,13 @@ export default function ProjectDetail() {
     const [editingTask, setEditingTask] = useState(null);
     const [milestoneLoading, setMilestoneLoading] = useState(false);
     const [milestoneError, setMilestoneError] = useState("");
+    const [showMilestoneModal, setShowMilestoneModal] = useState(false);
+    const [milestoneForm, setMilestoneForm] = useState({
+        name: "",
+        description: "",
+        dueDate: "",
+    });
+    const [editingMilestone, setEditingMilestone] = useState(null);
 
     useEffect(() => {
         fetchData();
@@ -272,6 +282,81 @@ export default function ProjectDetail() {
         }
     };
 
+    // Tạo milestone mới
+    const handleCreateMilestone = async (e) => {
+        e.preventDefault();
+        setMilestoneLoading(true);
+        setMilestoneError("");
+        try {
+            await createMilestone(id, milestoneForm);
+            setShowMilestoneModal(false);
+            setMilestoneForm({
+                name: "",
+                description: "",
+                dueDate: "",
+            });
+            fetchData();
+            alert("Đã tạo milestone thành công!");
+        } catch (err) {
+            setMilestoneError(
+                err.response?.data?.error || "Không thể tạo milestone"
+            );
+        } finally {
+            setMilestoneLoading(false);
+        }
+    };
+
+    // Mở modal chỉnh sửa milestone
+    const openEditMilestone = (milestone) => {
+        setEditingMilestone(milestone);
+        setMilestoneForm({
+            name: milestone.name,
+            description: milestone.description,
+            dueDate: milestone.dueDate?.slice(0, 10) || "",
+        });
+        setShowMilestoneModal(true);
+    };
+
+    // Cập nhật milestone
+    const handleUpdateMilestone = async (e) => {
+        e.preventDefault();
+        setMilestoneLoading(true);
+        setMilestoneError("");
+        try {
+            await updateMilestone(id, editingMilestone._id, milestoneForm);
+            setShowMilestoneModal(false);
+            setEditingMilestone(null);
+            setMilestoneForm({
+                name: "",
+                description: "",
+                dueDate: "",
+            });
+            fetchData();
+            alert("Đã cập nhật milestone thành công!");
+        } catch (err) {
+            setMilestoneError(
+                err.response?.data?.error || "Không thể cập nhật milestone"
+            );
+        } finally {
+            setMilestoneLoading(false);
+        }
+    };
+
+    // Xóa milestone
+    const handleDeleteMilestone = async (milestoneId) => {
+        if (!window.confirm("Bạn có chắc chắn muốn xóa milestone này?")) return;
+        setMilestoneLoading(true);
+        try {
+            await deleteMilestone(id, milestoneId);
+            fetchData();
+            alert("Đã xóa milestone thành công!");
+        } catch (err) {
+            alert(err.response?.data?.error || "Không thể xóa milestone");
+        } finally {
+            setMilestoneLoading(false);
+        }
+    };
+
     if (loading) return <div className="p-8">Đang tải...</div>;
     if (error) return <div className="p-8 text-red-500">{error}</div>;
     if (!project) return <div className="p-8">Không tìm thấy project</div>;
@@ -330,9 +415,9 @@ export default function ProjectDetail() {
                             project.milestones.map((m, idx) => (
                                 <li
                                     key={idx}
-                                    className="flex items-center gap-2"
+                                    className="flex items-center gap-2 mb-2"
                                 >
-                                    <span>
+                                    <span className="flex-1">
                                         {m.name} - {m.status} -{" "}
                                         {m.dueDate?.slice(0, 10)}
                                         {m.completedAt && (
@@ -346,37 +431,73 @@ export default function ProjectDetail() {
                                             </span>
                                         )}
                                     </span>
-                                    {m.status === "pending" && (
-                                        <button
-                                            onClick={() =>
-                                                handleCompleteMilestone(m._id)
-                                            }
-                                            disabled={milestoneLoading}
-                                            className="text-sm bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
-                                        >
-                                            {milestoneLoading
-                                                ? "Đang xử lý..."
-                                                : "Hoàn thành"}
-                                        </button>
-                                    )}
-                                    {m.status === "completed" && (
-                                        <button
-                                            onClick={() =>
-                                                handleCheckMilestoneConsistency(
-                                                    m._id
-                                                )
-                                            }
-                                            className="text-sm bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
-                                        >
-                                            Kiểm tra
-                                        </button>
-                                    )}
+                                    <div className="flex gap-1">
+                                        {m.status === "pending" && (
+                                            <button
+                                                onClick={() =>
+                                                    handleCompleteMilestone(
+                                                        m._id
+                                                    )
+                                                }
+                                                disabled={milestoneLoading}
+                                                className="text-sm bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
+                                            >
+                                                {milestoneLoading
+                                                    ? "Đang xử lý..."
+                                                    : "Hoàn thành"}
+                                            </button>
+                                        )}
+                                        {m.status === "completed" && (
+                                            <button
+                                                onClick={() =>
+                                                    handleCheckMilestoneConsistency(
+                                                        m._id
+                                                    )
+                                                }
+                                                className="text-sm bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                                            >
+                                                Kiểm tra
+                                            </button>
+                                        )}
+                                        {(currentUser.role === "admin" ||
+                                            currentUser.role === "manager") && (
+                                            <>
+                                                <button
+                                                    onClick={() =>
+                                                        openEditMilestone(m)
+                                                    }
+                                                    className="text-sm bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700"
+                                                >
+                                                    Sửa
+                                                </button>
+                                                <button
+                                                    onClick={() =>
+                                                        handleDeleteMilestone(
+                                                            m._id
+                                                        )
+                                                    }
+                                                    className="text-sm bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                                                >
+                                                    Xóa
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
                                 </li>
                             ))
                         ) : (
                             <li>Chưa có milestone nào</li>
                         )}
                     </ul>
+                    {(currentUser.role === "admin" ||
+                        currentUser.role === "manager") && (
+                        <button
+                            onClick={() => setShowMilestoneModal(true)}
+                            className="mt-2 text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                        >
+                            Thêm milestone
+                        </button>
+                    )}
                     {milestoneError && (
                         <div className="text-red-500 text-sm mt-2">
                             {milestoneError}
@@ -638,6 +759,114 @@ export default function ProjectDetail() {
                             {taskLoading
                                 ? "Đang xử lý..."
                                 : editingTask
+                                ? "Cập nhật"
+                                : "Tạo mới"}
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Modal cho milestone */}
+            <Modal
+                isOpen={showMilestoneModal}
+                onClose={() => {
+                    setShowMilestoneModal(false);
+                    setEditingMilestone(null);
+                    setMilestoneForm({
+                        name: "",
+                        description: "",
+                        dueDate: "",
+                    });
+                }}
+                title={editingMilestone ? "Sửa milestone" : "Tạo milestone mới"}
+            >
+                <form
+                    onSubmit={
+                        editingMilestone
+                            ? handleUpdateMilestone
+                            : handleCreateMilestone
+                    }
+                    className="space-y-4"
+                >
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                            Tên milestone
+                        </label>
+                        <input
+                            type="text"
+                            value={milestoneForm.name}
+                            onChange={(e) =>
+                                setMilestoneForm({
+                                    ...milestoneForm,
+                                    name: e.target.value,
+                                })
+                            }
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                            Mô tả
+                        </label>
+                        <textarea
+                            value={milestoneForm.description}
+                            onChange={(e) =>
+                                setMilestoneForm({
+                                    ...milestoneForm,
+                                    description: e.target.value,
+                                })
+                            }
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            rows={3}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                            Ngày hạn
+                        </label>
+                        <input
+                            type="date"
+                            value={milestoneForm.dueDate}
+                            onChange={(e) =>
+                                setMilestoneForm({
+                                    ...milestoneForm,
+                                    dueDate: e.target.value,
+                                })
+                            }
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            required
+                        />
+                    </div>
+                    {milestoneError && (
+                        <div className="text-red-500 text-sm">
+                            {milestoneError}
+                        </div>
+                    )}
+                    <div className="flex justify-end gap-2">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setShowMilestoneModal(false);
+                                setEditingMilestone(null);
+                                setMilestoneForm({
+                                    name: "",
+                                    description: "",
+                                    dueDate: "",
+                                });
+                            }}
+                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                            Hủy
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={milestoneLoading}
+                            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                            {milestoneLoading
+                                ? "Đang xử lý..."
+                                : editingMilestone
                                 ? "Cập nhật"
                                 : "Tạo mới"}
                         </button>

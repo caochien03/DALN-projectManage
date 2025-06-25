@@ -22,4 +22,7 @@ router.get(
 // Xóa bình luận
 router.delete("/comments/:commentId", auth, commentController.deleteComment);
 
+// Lấy comment detail theo ID
+router.get("/comments/:commentId", auth, commentController.getCommentById);
+
 module.exports = router;

@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const Document = require("../models/Document");
 const path = require("path");
+const notificationService = require("./notification.service");
+const Project = require("../models/Project");
 
 exports.uploadDocument = async (req, res) => {
     // TODO: Xử lý upload file vật lý với multer
@@ -28,6 +30,36 @@ exports.uploadDocument = async (req, res) => {
         type: mimetype,
         originalName: originalname,
     });
+
+    // Tạo thông báo cho tất cả thành viên project
+    try {
+        const project = await Project.findById(projectId).populate(
+            "members.user"
+        );
+        if (project && project.members.length > 0) {
+            const memberIds = project.members.map((member) => member.user._id);
+
+            // Tạo notification cho tất cả thành viên (trừ người upload)
+            const notifications = memberIds
+                .filter((memberId) => !memberId.equals(uploadedBy))
+                .map((memberId) => ({
+                    user: memberId,
+                    type: "new_document",
+                    message: `Tài liệu mới "${originalname}" đã được thêm vào dự án ${project.name}`,
+                    relatedTo: doc._id,
+                    onModel: "Document",
+                }));
+
+            await Promise.all(
+                notifications.map((notification) =>
+                    notificationService.createNotification(notification)
+                )
+            );
+        }
+    } catch (error) {
+        console.error("Error creating document notification:", error);
+    }
+
     return doc;
 };
 
@@ -80,4 +112,10 @@ exports.getDocumentVersions = async (docId) => {
 exports.deleteDocument = async (docId) => {
     // Xóa mềm
     await Document.findByIdAndUpdate(docId, { isDeleted: true });
+};
+
+exports.getDocumentById = async (docId) => {
+    return Document.findById(docId)
+        .populate("project", "name")
+        .populate("uploadedBy", "name email");
 };

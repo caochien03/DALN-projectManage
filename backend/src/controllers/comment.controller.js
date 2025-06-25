@@ -94,3 +94,16 @@ exports.deleteComment = async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 };
+
+exports.getCommentById = async (req, res) => {
+    try {
+        const commentId = req.params.commentId;
+        const comment = await commentService.getCommentById(commentId);
+        if (!comment) {
+            return res.status(404).json({ message: "Comment not found" });
+        }
+        res.json(comment);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};

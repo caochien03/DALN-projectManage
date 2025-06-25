@@ -18,6 +18,7 @@ const notificationSchema = new mongoose.Schema({
             "added_to_project",
             "added_to_department",
             "approval_request",
+            "milestone_created",
         ],
         required: true,
     },

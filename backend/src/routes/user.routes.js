@@ -7,18 +7,6 @@ const UserController = require("../controllers/user.controller");
 // Get all users
 router.get("/", auth, UserController.getAllUsers);
 
-// Get user by ID
-router.get("/:id", auth, UserController.getUserById);
-
-// Create new user
-router.post("/", auth, authorize(["admin"]), UserController.createUser);
-
-// Update user
-router.put("/:id", auth, authorize(["admin"]), UserController.updateUser);
-
-// Delete user
-router.delete("/:id", auth, authorize(["admin"]), UserController.deleteUser);
-
 // Get user notifications
 router.get("/notifications", auth, UserController.getUserNotifications);
 
@@ -34,5 +22,17 @@ router.get("/tasks", auth, UserController.getUserTasks);
 
 // Get user projects
 router.get("/projects", auth, UserController.getUserProjects);
+
+// Get user by ID
+router.get("/:id", auth, UserController.getUserById);
+
+// Create new user
+router.post("/", auth, authorize(["admin"]), UserController.createUser);
+
+// Update user
+router.put("/:id", auth, authorize(["admin"]), UserController.updateUser);
+
+// Delete user
+router.delete("/:id", auth, authorize(["admin"]), UserController.deleteUser);
 
 module.exports = router;

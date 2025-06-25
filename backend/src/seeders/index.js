@@ -4,6 +4,7 @@ const seedDepartments = require("./departmentSeeder");
 const seedUsers = require("./userSeeder");
 const seedProjects = require("./projectSeeder");
 const seedTasks = require("./taskSeeder");
+const seedNotifications = require("./notificationSeeder");
 
 const seedDatabase = async () => {
     try {
@@ -30,6 +31,11 @@ const seedDatabase = async () => {
         console.log("Starting to seed tasks...");
         const tasks = await seedTasks(users, projects);
         console.log("Tasks seeded:", tasks.length);
+
+        // Seed notifications using the created users
+        console.log("Starting to seed notifications...");
+        const notifications = await seedNotifications(users);
+        console.log("Notifications seeded:", notifications.length);
 
         console.log("Database seeding completed successfully");
         await mongoose.connection.close();

@@ -80,3 +80,16 @@ exports.deleteDocument = async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 };
+
+exports.getDocumentById = async (req, res) => {
+    try {
+        const docId = req.params.docId;
+        const document = await documentService.getDocumentById(docId);
+        if (!document) {
+            return res.status(404).json({ message: "Document not found" });
+        }
+        res.json(document);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};

@@ -1,51 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { BellIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../utils/axios";
 import { useNotificationContext } from "./NotificationProvider";
 
 const NotificationBell = () => {
-    const [unreadCount, setUnreadCount] = useState(0);
-    const [loading, setLoading] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const navigate = useNavigate();
-    const { notifications } = useNotificationContext();
+    const { unreadCount, loading } = useNotificationContext();
 
     useEffect(() => {
         // Kiểm tra xem user đã đăng nhập chưa
         const token = localStorage.getItem("token");
         setIsAuthenticated(!!token);
-
-        if (token) {
-            fetchUnreadCount();
-
-            // Poll for new notifications every 30 seconds
-            const interval = setInterval(fetchUnreadCount, 30000);
-
-            return () => clearInterval(interval);
-        }
     }, []);
-
-    // Update unread count when notifications change
-    useEffect(() => {
-        if (isAuthenticated) {
-            const unreadNotifications = notifications.filter((n) => !n.read);
-            setUnreadCount(unreadNotifications.length);
-        }
-    }, [notifications, isAuthenticated]);
-
-    const fetchUnreadCount = async () => {
-        try {
-            setLoading(true);
-            const response = await axiosInstance.get("/api/notifications");
-            const unreadNotifications = response.data.filter((n) => !n.read);
-            setUnreadCount(unreadNotifications.length);
-        } catch (error) {
-            console.error("Error fetching unread count:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleClick = () => {
         navigate("/notifications");

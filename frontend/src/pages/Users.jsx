@@ -8,6 +8,7 @@ import {
 } from "../services/user";
 import { getAllDepartments } from "../services/department";
 import Modal from "../components/Modal";
+import Loading from "../components/Loading";
 
 export default function Users() {
     const [users, setUsers] = useState([]);
@@ -111,6 +112,10 @@ export default function Users() {
             }
         }
     };
+
+    if (isLoading) {
+        return <Loading />;
+    }
 
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -415,7 +420,7 @@ export default function Users() {
                                 </thead>
                                 <tbody className="divide-y divide-gray-200 bg-white">
                                     {users.map((user) => (
-                                        <tr key={user.id}>
+                                        <tr key={user._id}>
                                             <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                                                 {user.name}
                                             </td>
@@ -436,7 +441,7 @@ export default function Users() {
                                                 </button>
                                                 <button
                                                     onClick={() =>
-                                                        handleDelete(user.id)
+                                                        handleDelete(user._id)
                                                     }
                                                     className="text-red-600 hover:text-red-900"
                                                 >

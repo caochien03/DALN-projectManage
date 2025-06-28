@@ -14,7 +14,7 @@ export const useNotifications = () => {
         try {
             setLoading(true);
             const response = await axiosInstance.get("/api/notifications");
-            const newNotifications = response.data;
+            const newNotifications = response.data.data;
 
             setNotifications((prevNotifications) => {
                 // Kiểm tra thông báo mới
@@ -27,13 +27,21 @@ export const useNotifications = () => {
                 );
 
                 if (newUnreadNotifications.length > 0) {
+                    console.log(
+                        `[useNotifications] Found ${newUnreadNotifications.length} new unread notifications`
+                    );
                     setPopupNotifications((prev) => [
                         ...prev,
                         ...newUnreadNotifications,
                     ]);
                 }
 
-                setUnreadCount(newNotifications.filter((n) => !n.read).length);
+                // Cập nhật unread count
+                const newUnreadCount = newNotifications.filter(
+                    (n) => !n.read
+                ).length;
+                setUnreadCount(newUnreadCount);
+
                 return newNotifications;
             });
         } catch (error) {
@@ -55,6 +63,7 @@ export const useNotifications = () => {
                         : notif
                 )
             );
+            // Cập nhật unread count ngay lập tức
             setUnreadCount((prev) => Math.max(0, prev - 1));
         } catch (error) {
             console.error("Error marking notification as read:", error);
@@ -76,11 +85,21 @@ export const useNotifications = () => {
     const deleteNotification = useCallback(async (notificationId) => {
         try {
             await axiosInstance.delete(`/api/notifications/${notificationId}`);
-            setNotifications((prev) =>
-                prev.filter((notif) => notif._id !== notificationId)
-            );
-            // Cập nhật unread count nếu cần
-            setUnreadCount((prev) => Math.max(0, prev - 1));
+            setNotifications((prev) => {
+                const deletedNotification = prev.find(
+                    (n) => n._id === notificationId
+                );
+                const newNotifications = prev.filter(
+                    (notif) => notif._id !== notificationId
+                );
+
+                // Cập nhật unread count nếu notification bị xóa chưa đọc
+                if (deletedNotification && !deletedNotification.read) {
+                    setUnreadCount((prev) => Math.max(0, prev - 1));
+                }
+
+                return newNotifications;
+            });
         } catch (error) {
             console.error("Error deleting notification:", error);
         }
@@ -102,10 +121,42 @@ export const useNotifications = () => {
         if (token) {
             fetchNotifications();
 
-            // Poll for new notifications every 30 seconds
-            const interval = setInterval(fetchNotifications, 30000);
+            // Poll for new notifications every 15 seconds (giảm từ 30s)
+            const interval = setInterval(fetchNotifications, 15000);
 
-            return () => clearInterval(interval);
+            // Thêm event listener để cập nhật khi có notification mới từ server
+            const handleNewNotification = () => {
+                console.log(
+                    "[useNotifications] Received new notification event, fetching..."
+                );
+                fetchNotifications();
+            };
+
+            // Lắng nghe custom event khi có notification mới
+            window.addEventListener("newNotification", handleNewNotification);
+
+            // Lắng nghe event cập nhật badge count
+            const handleUpdateBadgeCount = (event) => {
+                const { count } = event.detail;
+                console.log(
+                    "[useNotifications] Updating badge count to:",
+                    count
+                );
+                setUnreadCount(count);
+            };
+            window.addEventListener("updateBadgeCount", handleUpdateBadgeCount);
+
+            return () => {
+                clearInterval(interval);
+                window.removeEventListener(
+                    "newNotification",
+                    handleNewNotification
+                );
+                window.removeEventListener(
+                    "updateBadgeCount",
+                    handleUpdateBadgeCount
+                );
+            };
         }
     }, [fetchNotifications]);
 

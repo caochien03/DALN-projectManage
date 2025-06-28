@@ -29,12 +29,13 @@ instance.interceptors.response.use(
     (response) => {
         // Hiển thị thông báo thành công cho các request POST, PUT, DELETE
         const method = response.config.method;
-        if (method === "post") {
-            toast.success("Thêm mới thành công");
-        } else if (method === "put") {
-            toast.success("Cập nhật thành công");
-        } else if (method === "delete") {
-            toast.success("Xóa thành công");
+        const message = response.data?.message;
+        if (method === "post" && message) {
+            toast.success(message);
+        } else if (method === "put" && message) {
+            toast.success(message);
+        } else if (method === "delete" && message) {
+            toast.success(message);
         }
         return response;
     },

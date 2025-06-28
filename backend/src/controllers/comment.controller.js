@@ -11,9 +11,13 @@ exports.addCommentToTask = async (req, res) => {
             content,
             mentions,
         });
-        res.status(201).json(comment);
+        res.status(201).json({
+            success: true,
+            message: "Thêm bình luận vào task thành công!",
+            data: comment,
+        });
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        res.status(400).json({ success: false, message: error.message });
     }
 };
 
@@ -21,9 +25,9 @@ exports.getCommentsOfTask = async (req, res) => {
     try {
         const { id: taskId } = req.params;
         const comments = await commentService.getComments({ task: taskId });
-        res.json(comments);
+        res.json({ success: true, data: comments });
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        res.status(400).json({ success: false, message: error.message });
     }
 };
 
@@ -33,7 +37,9 @@ exports.addCommentToProject = async (req, res) => {
             req.params.id
         );
         if (!project) {
-            return res.status(404).json({ message: "Project not found" });
+            return res
+                .status(404)
+                .json({ success: false, message: "Project not found" });
         }
         // Kiểm tra quyền: chỉ cho phép nếu user là thành viên của project hoặc là admin
         const isMember = project.members.some(
@@ -41,6 +47,7 @@ exports.addCommentToProject = async (req, res) => {
         );
         if (!isMember && req.user.role !== "admin") {
             return res.status(403).json({
+                success: false,
                 message: "Bạn không có quyền bình luận vào dự án này",
             });
         }
@@ -52,9 +59,13 @@ exports.addCommentToProject = async (req, res) => {
             content,
             mentions,
         });
-        res.status(201).json(comment);
+        res.status(201).json({
+            success: true,
+            message: "Thêm bình luận vào dự án thành công!",
+            data: comment,
+        });
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        res.status(400).json({ success: false, message: error.message });
     }
 };
 
@@ -64,9 +75,9 @@ exports.getCommentsOfProject = async (req, res) => {
         const comments = await commentService.getComments({
             project: projectId,
         });
-        res.json(comments);
+        res.json({ success: true, data: comments });
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        res.status(400).json({ success: false, message: error.message });
     }
 };
 
@@ -79,19 +90,20 @@ exports.deleteComment = async (req, res) => {
         if (!comment)
             return res
                 .status(404)
-                .json({ message: "Không tìm thấy bình luận" });
+                .json({ success: false, message: "Không tìm thấy bình luận" });
         if (
             userRole !== "admin" &&
             String(comment.author._id) !== String(userId)
         ) {
-            return res
-                .status(403)
-                .json({ message: "Bạn không có quyền xóa bình luận này" });
+            return res.status(403).json({
+                success: false,
+                message: "Bạn không có quyền xóa bình luận này",
+            });
         }
         await commentService.deleteComment(commentId);
-        res.json({ message: "Đã xóa bình luận" });
+        res.json({ success: true, message: "Đã xóa bình luận" });
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        res.status(400).json({ success: false, message: error.message });
     }
 };
 
@@ -100,10 +112,12 @@ exports.getCommentById = async (req, res) => {
         const commentId = req.params.commentId;
         const comment = await commentService.getCommentById(commentId);
         if (!comment) {
-            return res.status(404).json({ message: "Comment not found" });
+            return res
+                .status(404)
+                .json({ success: false, message: "Comment not found" });
         }
-        res.json(comment);
+        res.json({ success: true, data: comment });
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        res.status(400).json({ success: false, message: error.message });
     }
 };

@@ -10,6 +10,7 @@ import axiosInstance from "../utils/axios";
 import { getTaskById } from "../services/task";
 import { getCommentById } from "../services/comment";
 import { getDocumentById } from "../services/document";
+import Loading from "../components/Loading";
 
 const NotificationPage = () => {
     const [notifications, setNotifications] = useState([]);
@@ -26,7 +27,7 @@ const NotificationPage = () => {
         try {
             setLoading(true);
             const response = await axiosInstance.get("/api/notifications");
-            setNotifications(response.data);
+            setNotifications(response.data.data);
             setError(null);
         } catch (error) {
             console.error("Error fetching notifications:", error);
@@ -236,11 +237,7 @@ const NotificationPage = () => {
     const unreadCount = notifications.filter((n) => !n.read).length;
 
     if (loading) {
-        return (
-            <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-            </div>
-        );
+        return <Loading />;
     }
 
     if (error) {

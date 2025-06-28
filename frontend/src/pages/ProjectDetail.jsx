@@ -18,6 +18,8 @@ import Modal from "../components/Modal";
 import TaskBoard from "../components/TaskBoard";
 import DocumentManager from "../components/DocumentManager";
 import CommentBox from "../components/CommentBox";
+import Loading from "../components/Loading";
+import PermissionNotice from "../components/PermissionNotice";
 
 export default function ProjectDetail() {
     const { id } = useParams();
@@ -190,13 +192,45 @@ export default function ProjectDetail() {
     const projectMembers =
         project?.members
             ?.map((m) => {
-                if (typeof m.user === "object" && m.user._id) return m.user;
+                if (typeof m.user === "object" && m.user?._id) return m.user;
                 return users.find((u) => u._id === m.user || u.id === m.user);
             })
-            .filter(Boolean) || [];
+            .filter((u) => u && u._id) || [];
 
     // Lấy user hiện tại từ localStorage
     const currentUser = JSON.parse(localStorage.getItem("user"));
+
+    // Kiểm tra quyền
+    const isAdmin = currentUser?.role === "admin";
+    const isManager = currentUser?.role === "manager";
+    const isProjectManager = isAdmin || isManager;
+    const isMember = currentUser?.role === "member";
+
+    // Kiểm tra xem user có phải là member của project không
+    const isProjectMember = project?.members?.some(
+        (m) => (m.user?._id || m.user) === currentUser?._id
+    );
+
+    // Kiểm tra xem user có thể chỉnh sửa task không (admin/manager hoặc member được giao task)
+    const canEditTask = (task) => {
+        if (isProjectManager) return true;
+        if (isMember && task.assignedTo === currentUser?._id) return true;
+        return false;
+    };
+
+    // Kiểm tra xem user có thể xóa task không (chỉ admin/manager)
+    const canDeleteTask = () => {
+        return isProjectManager;
+    };
+
+    // Kiểm tra xem user có thể tạo task không (admin/manager)
+    const canCreateTask = isProjectManager;
+
+    // Kiểm tra xem user có thể upload document không (admin/manager hoặc member của project)
+    const canUploadDocument = isProjectManager || isProjectMember;
+
+    // Kiểm tra xem user có thể xóa document không (chỉ admin/manager)
+    const canDeleteDocument = isProjectManager;
 
     // Xác nhận hoàn thành project
     const handleCompleteProject = async () => {
@@ -357,7 +391,9 @@ export default function ProjectDetail() {
         }
     };
 
-    if (loading) return <div className="p-8">Đang tải...</div>;
+    if (loading) {
+        return <Loading />;
+    }
     if (error) return <div className="p-8 text-red-500">{error}</div>;
     if (!project) return <div className="p-8">Không tìm thấy project</div>;
 
@@ -365,7 +401,7 @@ export default function ProjectDetail() {
         <div className="p-8">
             <div className="flex justify-between items-center mb-4">
                 <h1 className="text-2xl font-bold">{project.name}</h1>
-                {project.status === "open" && (
+                {project.status === "open" && isProjectManager && (
                     <button
                         onClick={handleCompleteProject}
                         className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
@@ -405,86 +441,92 @@ export default function ProjectDetail() {
                     </div>
                     <div className="mb-2 text-gray-700">
                         Thành viên:{" "}
-                        {projectMembers.map((m) => m.name).join(", ")}
+                        {projectMembers
+                            .filter((m) => m && m._id)
+                            .map((m) => m.name)
+                            .join(", ")}
                     </div>
                     <div className="mb-2 text-gray-700 font-semibold">
                         Milestones:
                     </div>
                     <ul className="list-disc ml-5">
                         {project.milestones?.length > 0 ? (
-                            project.milestones.map((m, idx) => (
-                                <li
-                                    key={idx}
-                                    className="flex items-center gap-2 mb-2"
-                                >
-                                    <span className="flex-1">
-                                        {m.name} - {m.status} -{" "}
-                                        {m.dueDate?.slice(0, 10)}
-                                        {m.completedAt && (
-                                            <span className="text-sm text-gray-500">
-                                                {" "}
-                                                (Hoàn thành:{" "}
-                                                {new Date(
-                                                    m.completedAt
-                                                ).toLocaleDateString()}
-                                                )
-                                            </span>
-                                        )}
-                                    </span>
-                                    <div className="flex gap-1">
-                                        {m.status === "pending" && (
-                                            <button
-                                                onClick={() =>
-                                                    handleCompleteMilestone(
-                                                        m._id
+                            project.milestones
+                                .filter((m) => m && m._id)
+                                .map((m, idx) => (
+                                    <li
+                                        key={m._id || idx}
+                                        className="flex items-center gap-2 mb-2"
+                                    >
+                                        <span className="flex-1">
+                                            {m.name} - {m.status} -{" "}
+                                            {m.dueDate?.slice(0, 10)}
+                                            {m.completedAt && (
+                                                <span className="text-sm text-gray-500">
+                                                    {" "}
+                                                    (Hoàn thành:{" "}
+                                                    {new Date(
+                                                        m.completedAt
+                                                    ).toLocaleDateString()}
                                                     )
-                                                }
-                                                disabled={milestoneLoading}
-                                                className="text-sm bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
-                                            >
-                                                {milestoneLoading
-                                                    ? "Đang xử lý..."
-                                                    : "Hoàn thành"}
-                                            </button>
-                                        )}
-                                        {m.status === "completed" && (
-                                            <button
-                                                onClick={() =>
-                                                    handleCheckMilestoneConsistency(
-                                                        m._id
-                                                    )
-                                                }
-                                                className="text-sm bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
-                                            >
-                                                Kiểm tra
-                                            </button>
-                                        )}
-                                        {(currentUser.role === "admin" ||
-                                            currentUser.role === "manager") && (
-                                            <>
+                                                </span>
+                                            )}
+                                        </span>
+                                        <div className="flex gap-1">
+                                            {m.status === "pending" && (
                                                 <button
                                                     onClick={() =>
-                                                        openEditMilestone(m)
-                                                    }
-                                                    className="text-sm bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700"
-                                                >
-                                                    Sửa
-                                                </button>
-                                                <button
-                                                    onClick={() =>
-                                                        handleDeleteMilestone(
+                                                        handleCompleteMilestone(
                                                             m._id
                                                         )
                                                     }
-                                                    className="text-sm bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                                                    disabled={milestoneLoading}
+                                                    className="text-sm bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
                                                 >
-                                                    Xóa
+                                                    {milestoneLoading
+                                                        ? "Đang xử lý..."
+                                                        : "Hoàn thành"}
                                                 </button>
-                                            </>
-                                        )}
-                                    </div>
-                                </li>
-                            ))
+                                            )}
+                                            {m.status === "completed" && (
+                                                <button
+                                                    onClick={() =>
+                                                        handleCheckMilestoneConsistency(
+                                                            m._id
+                                                        )
+                                                    }
+                                                    className="text-sm bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                                                >
+                                                    Kiểm tra
+                                                </button>
+                                            )}
+                                            {(currentUser.role === "admin" ||
+                                                currentUser.role ===
+                                                    "manager") && (
+                                                <>
+                                                    <button
+                                                        onClick={() =>
+                                                            openEditMilestone(m)
+                                                        }
+                                                        className="text-sm bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700"
+                                                    >
+                                                        Sửa
+                                                    </button>
+                                                    <button
+                                                        onClick={() =>
+                                                            handleDeleteMilestone(
+                                                                m._id
+                                                            )
+                                                        }
+                                                        className="text-sm bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                                                    >
+                                                        Xóa
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </li>
+                                ))
                         ) : (
                             <li>Chưa có milestone nào</li>
                         )}
@@ -506,13 +548,23 @@ export default function ProjectDetail() {
                 </div>
             </div>
 
+            {/* Thông báo phân quyền cho member */}
+            {isMember && (
+                <PermissionNotice
+                    message="Bạn là thành viên của dự án. Bạn có thể xem thông tin, tải lên tài liệu, và chỉnh sửa task được giao cho mình."
+                    type="info"
+                />
+            )}
+
             {/* Nút thêm task */}
-            <button
-                className="mb-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
-                onClick={() => setShowTaskModal(true)}
-            >
-                Thêm task
-            </button>
+            {canCreateTask && (
+                <button
+                    className="mb-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+                    onClick={() => setShowTaskModal(true)}
+                >
+                    Thêm task
+                </button>
+            )}
 
             <TaskBoard
                 tasks={tasks}
@@ -521,10 +573,16 @@ export default function ProjectDetail() {
                 onTaskDelete={handleDeleteTask}
                 getUserName={getUserName}
                 onTaskStatusChangeOptimistic={handleTaskStatusChangeOptimistic}
+                canEditTask={canEditTask}
+                canDeleteTask={canDeleteTask}
             />
 
             {/* Section quản lý tài liệu */}
-            <DocumentManager projectId={id} canEdit={true} />
+            <DocumentManager
+                projectId={id}
+                canEdit={canUploadDocument}
+                canDelete={canDeleteDocument}
+            />
 
             {/* Section bình luận dự án */}
             <CommentBox
@@ -541,33 +599,37 @@ export default function ProjectDetail() {
                             Thành viên chờ duyệt:
                         </h3>
                         <ul>
-                            {project.pendingMembers.map((userId) => {
-                                const user = users.find(
-                                    (u) => u._id === userId
-                                );
-                                return (
-                                    <li
-                                        key={userId}
-                                        className="flex items-center gap-2"
-                                    >
-                                        {user?.name || userId}
-                                        <button
-                                            onClick={() =>
-                                                handleApprove(userId)
-                                            }
-                                            className="bg-green-600 text-white px-2 py-1 rounded"
+                            {project.pendingMembers
+                                ?.filter((userId) => userId)
+                                .map((userId) => {
+                                    const user = users.find(
+                                        (u) => u._id === userId
+                                    );
+                                    return (
+                                        <li
+                                            key={userId}
+                                            className="flex items-center gap-2"
                                         >
-                                            Duyệt
-                                        </button>
-                                        <button
-                                            onClick={() => handleReject(userId)}
-                                            className="bg-red-600 text-white px-2 py-1 rounded"
-                                        >
-                                            Từ chối
-                                        </button>
-                                    </li>
-                                );
-                            })}
+                                            {user?.name || userId}
+                                            <button
+                                                onClick={() =>
+                                                    handleApprove(userId)
+                                                }
+                                                className="bg-green-600 text-white px-2 py-1 rounded"
+                                            >
+                                                Duyệt
+                                            </button>
+                                            <button
+                                                onClick={() =>
+                                                    handleReject(userId)
+                                                }
+                                                className="bg-red-600 text-white px-2 py-1 rounded"
+                                            >
+                                                Từ chối
+                                            </button>
+                                        </li>
+                                    );
+                                })}
                         </ul>
                     </div>
                 )}
@@ -642,11 +704,13 @@ export default function ProjectDetail() {
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         >
                             <option value="">Chọn người thực hiện</option>
-                            {projectMembers.map((user) => (
-                                <option key={user._id} value={user._id}>
-                                    {user.name}
-                                </option>
-                            ))}
+                            {projectMembers.map((user) =>
+                                user && user._id ? (
+                                    <option key={user._id} value={user._id}>
+                                        {user.name}
+                                    </option>
+                                ) : null
+                            )}
                         </select>
                     </div>
                     <div>
@@ -717,14 +781,16 @@ export default function ProjectDetail() {
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         >
                             <option value="">Chọn milestone</option>
-                            {project.milestones?.map((milestone) => (
-                                <option
-                                    key={milestone._id}
-                                    value={milestone._id}
-                                >
-                                    {milestone.name}
-                                </option>
-                            ))}
+                            {project.milestones?.map((milestone) =>
+                                milestone && milestone._id ? (
+                                    <option
+                                        key={milestone._id}
+                                        value={milestone._id}
+                                    >
+                                        {milestone.name}
+                                    </option>
+                                ) : null
+                            )}
                         </select>
                     </div>
                     {taskError && (

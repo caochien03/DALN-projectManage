@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { getCurrentUser, updateProfile } from "../services/auth";
 import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Loading from "../components/Loading";
 
 export default function Profile() {
     const [formData, setFormData] = useState({
@@ -14,7 +16,7 @@ export default function Profile() {
         twitter: "",
         github: "",
     });
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
@@ -23,6 +25,7 @@ export default function Profile() {
     }, []);
 
     const fetchProfile = async () => {
+        setIsLoading(true);
         try {
             const user = await getCurrentUser();
             setFormData({
@@ -36,8 +39,10 @@ export default function Profile() {
                 twitter: user.twitter || "",
                 github: user.github || "",
             });
-        } catch (err) {
+        } catch {
             setError("Không thể tải thông tin cá nhân");
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -57,6 +62,10 @@ export default function Profile() {
             setIsLoading(false);
         }
     };
+
+    if (isLoading) {
+        return <Loading />;
+    }
 
     return (
         <div className="max-w-5xl mx-auto mt-10 p-8 bg-white rounded-2xl shadow-md">
@@ -111,7 +120,11 @@ export default function Profile() {
                             required: true,
                         },
                         { label: "Vị trí", key: "position", type: "text" },
-                        { label: "Số điện thoại", key: "phone", type: "text" },
+                        {
+                            label: "Số điện thoại",
+                            key: "phone",
+                            type: "text",
+                        },
                         { label: "Địa chỉ", key: "address", type: "text" },
                         {
                             label: "URL ảnh đại diện (tùy chọn)",

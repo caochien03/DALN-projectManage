@@ -10,10 +10,14 @@ class AuthController {
         try {
             const { email, password } = req.body;
             const result = await AuthService.login(email, password);
-            res.json(result);
+            res.json({
+                success: true,
+                message: "Đăng nhập thành công!",
+                data: result,
+            });
         } catch (error) {
             console.error("Login error:", error);
-            res.status(401).json({ message: error.message });
+            res.status(401).json({ success: false, message: error.message });
         }
     }
 
@@ -21,10 +25,14 @@ class AuthController {
     async register(req, res) {
         try {
             const result = await AuthService.register(req.body);
-            res.status(201).json(result);
+            res.status(201).json({
+                success: true,
+                message: "Đăng ký thành công!",
+                data: result,
+            });
         } catch (error) {
             console.error("Register error:", error);
-            res.status(400).json({ message: error.message });
+            res.status(400).json({ success: false, message: error.message });
         }
     }
 
@@ -32,10 +40,10 @@ class AuthController {
     async getCurrentUser(req, res) {
         try {
             const user = await AuthService.getCurrentUser(req.user._id);
-            res.json(user);
+            res.json({ success: true, data: user });
         } catch (error) {
             console.error("Get current user error:", error);
-            res.status(404).json({ message: error.message });
+            res.status(404).json({ success: false, message: error.message });
         }
     }
 
@@ -46,10 +54,14 @@ class AuthController {
                 req.user._id,
                 req.body
             );
-            res.json(result);
+            res.json({
+                success: true,
+                message: "Cập nhật thông tin thành công!",
+                data: result,
+            });
         } catch (error) {
             console.error("Update profile error:", error);
-            res.status(400).json({ message: error.message });
+            res.status(400).json({ success: false, message: error.message });
         }
     }
 
@@ -62,10 +74,14 @@ class AuthController {
                 currentPassword,
                 newPassword
             );
-            res.json(result);
+            res.json({
+                success: true,
+                message: "Đổi mật khẩu thành công!",
+                data: result,
+            });
         } catch (error) {
             console.error("Change password error:", error);
-            res.status(401).json({ message: error.message });
+            res.status(401).json({ success: false, message: error.message });
         }
     }
 
@@ -74,10 +90,14 @@ class AuthController {
         try {
             const { email } = req.body;
             const result = await AuthService.forgotPassword(email);
-            res.json(result);
+            res.json({
+                success: true,
+                message: "Đã gửi hướng dẫn đặt lại mật khẩu!",
+                data: result,
+            });
         } catch (error) {
             console.error("Forgot password error:", error);
-            res.status(404).json({ message: error.message });
+            res.status(404).json({ success: false, message: error.message });
         }
     }
 
@@ -86,10 +106,14 @@ class AuthController {
         try {
             const { token, newPassword } = req.body;
             const result = await AuthService.resetPassword(token, newPassword);
-            res.json(result);
+            res.json({
+                success: true,
+                message: "Đặt lại mật khẩu thành công!",
+                data: result,
+            });
         } catch (error) {
             console.error("Reset password error:", error);
-            res.status(400).json({ message: error.message });
+            res.status(400).json({ success: false, message: error.message });
         }
     }
 }

@@ -11,6 +11,7 @@ import {
 import { getAllDepartments } from "../services/department";
 import { getAllUsers } from "../services/user";
 import Modal from "../components/Modal";
+import Loading from "../components/Loading";
 
 const statuses = ["open", "close"];
 
@@ -218,6 +219,10 @@ export default function Projects() {
         if (isPending) return "pending";
         return "not-registered";
     };
+
+    if (isLoading) {
+        return <Loading />;
+    }
 
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

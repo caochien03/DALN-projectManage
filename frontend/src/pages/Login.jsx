@@ -17,12 +17,16 @@ export default function Login() {
         setIsLoading(true);
 
         try {
-            const { token, user } = await login(email, password);
-            localStorage.setItem("token", token);
-            const userWithId = { ...user, _id: user.id };
-            localStorage.setItem("user", JSON.stringify(userWithId));
-            toast.success("Đăng nhập thành công");
-            navigate("/");
+            const res = await login(email, password);
+            if (res.success && res.data?.token) {
+                localStorage.setItem("token", res.data.token);
+                const userWithId = { ...res.data.user, _id: res.data.user.id };
+                localStorage.setItem("user", JSON.stringify(userWithId));
+                toast.success(res.message || "Đăng nhập thành công");
+                navigate("/");
+            } else {
+                toast.error(res.message || "Đăng nhập thất bại");
+            }
         } catch (err) {
             const errorMessage =
                 err.response?.data?.message || "Đăng nhập thất bại";

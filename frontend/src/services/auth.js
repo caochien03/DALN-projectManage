@@ -39,7 +39,7 @@ export const forgotPassword = async (email) => {
 // Get current user
 export const getCurrentUser = async () => {
     const response = await axiosInstance.get("/api/auth/me");
-    return response.data;
+    return response.data.data;
 };
 
 // Update profile

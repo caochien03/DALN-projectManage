@@ -3,7 +3,7 @@ import axiosInstance from "../utils/axios";
 // Get all users
 export const getAllUsers = async () => {
     const response = await axiosInstance.get("/api/users");
-    return response.data;
+    return response.data.data;
 };
 
 // Create user
@@ -27,11 +27,11 @@ export const deleteUser = async (userId) => {
 // Lấy các project mà user tham gia
 export const getUserProjects = async () => {
     const response = await axiosInstance.get("/api/users/projects");
-    return response.data;
+    return response.data.data;
 };
 
 // Lấy các task của user
 export const getUserTasks = async () => {
     const response = await axiosInstance.get("/api/users/tasks");
-    return response.data;
+    return response.data.data;
 };

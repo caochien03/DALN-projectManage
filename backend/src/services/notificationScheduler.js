@@ -4,9 +4,19 @@ const notificationService = require("./notification.service");
 
 class NotificationScheduler {
     static init() {
+        // Chạy mỗi 5 phút để test (có thể thay đổi sau)
+        cron.schedule("*/5 * * * *", async () => {
+            console.log(
+                "🔔 Running notification scheduler (every 5 minutes)..."
+            );
+            await this.checkDueTasks();
+            await this.checkOverdueTasks();
+            await this.checkProjectDue();
+        });
+
         // Chạy mỗi giờ để kiểm tra task sắp đến hạn
         cron.schedule("0 * * * *", async () => {
-            console.log("🔔 Running notification scheduler...");
+            console.log("🔔 Running notification scheduler (hourly)...");
             await this.checkDueTasks();
         });
 
@@ -78,7 +88,7 @@ class NotificationScheduler {
                 const existingNotification =
                     await notificationService.getNotificationByTaskAndType(
                         task._id,
-                        "task_overdue",
+                        "task_due",
                         task.assignedTo._id
                     );
 
@@ -120,13 +130,15 @@ class NotificationScheduler {
 
             for (const project of dueProjects) {
                 for (const member of project.members) {
-                    await notificationService.createNotification({
-                        user: member.user._id,
-                        type: "task_due",
-                        message: `Dự án "${project.name}" sắp đến hạn hoàn thành`,
-                        relatedTo: project._id,
-                        onModel: "Project",
-                    });
+                    if (member.user && member.user._id) {
+                        await notificationService.createNotification({
+                            user: member.user._id,
+                            type: "task_due",
+                            message: `Dự án "${project.name}" sắp đến hạn hoàn thành`,
+                            relatedTo: project._id,
+                            onModel: "Project",
+                        });
+                    }
                 }
             }
 

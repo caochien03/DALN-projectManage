@@ -8,7 +8,11 @@ import {
 } from "../services/document";
 import { toast } from "react-toastify";
 
-export default function DocumentManager({ projectId, canEdit = true }) {
+export default function DocumentManager({
+    projectId,
+    canEdit = true,
+    canDelete = true,
+}) {
     const [documents, setDocuments] = useState([]);
     const [uploading, setUploading] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
@@ -164,7 +168,7 @@ export default function DocumentManager({ projectId, canEdit = true }) {
                                     >
                                         Phiên bản
                                     </button>
-                                    {canEdit && (
+                                    {canDelete && (
                                         <button
                                             onClick={() => handleDelete(doc)}
                                             className="text-red-600 hover:underline"

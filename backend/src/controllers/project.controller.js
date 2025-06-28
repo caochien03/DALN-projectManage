@@ -9,18 +9,22 @@ class ProjectController {
                 ...req.body,
                 createdBy: req.user._id,
             });
-            res.status(201).json(project);
+            res.status(201).json({
+                success: true,
+                message: "Tạo dự án thành công!",
+                data: project,
+            });
         } catch (error) {
-            res.status(400).json({ error: error.message });
+            res.status(400).json({ success: false, message: error.message });
         }
     }
 
     static async getAllProjects(req, res) {
         try {
             const projects = await ProjectService.getAllProjects();
-            res.json(projects);
+            res.json({ success: true, data: projects });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -28,20 +32,23 @@ class ProjectController {
         try {
             const project = await ProjectService.getProjectById(req.params.id);
             if (!project) {
-                return res.status(404).json({ error: "Project not found" });
+                return res
+                    .status(404)
+                    .json({ success: false, message: "Project not found" });
             }
             // Kiểm tra quyền: chỉ cho phép nếu user là thành viên của project hoặc là admin
             const isMember = project.members.some(
                 (m) => m.user && m.user._id && m.user._id.equals(req.user._id)
             );
             if (!isMember && req.user.role !== "admin") {
-                return res
-                    .status(403)
-                    .json({ error: "Bạn không có quyền truy cập dự án này" });
+                return res.status(403).json({
+                    success: false,
+                    message: "Bạn không có quyền truy cập dự án này",
+                });
             }
-            res.json(project);
+            res.json({ success: true, data: project });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -64,7 +71,9 @@ class ProjectController {
         );
 
         if (!isValidOperation) {
-            return res.status(400).json({ error: "Invalid updates" });
+            return res
+                .status(400)
+                .json({ success: false, message: "Invalid updates" });
         }
 
         try {
@@ -73,11 +82,17 @@ class ProjectController {
                 req.body
             );
             if (!project) {
-                return res.status(404).json({ error: "Project not found" });
+                return res
+                    .status(404)
+                    .json({ success: false, message: "Project not found" });
             }
-            res.json(project);
+            res.json({
+                success: true,
+                message: "Cập nhật dự án thành công!",
+                data: project,
+            });
         } catch (error) {
-            res.status(400).json({ error: error.message });
+            res.status(400).json({ success: false, message: error.message });
         }
     }
 
@@ -88,11 +103,17 @@ class ProjectController {
                 req.body
             );
             if (!project) {
-                return res.status(404).json({ error: "Project not found" });
+                return res
+                    .status(404)
+                    .json({ success: false, message: "Project not found" });
             }
-            res.json(project);
+            res.json({
+                success: true,
+                message: "Thêm thành viên thành công!",
+                data: project,
+            });
         } catch (error) {
-            res.status(400).json({ error: error.message });
+            res.status(400).json({ success: false, message: error.message });
         }
     }
 
@@ -103,11 +124,17 @@ class ProjectController {
                 req.params.memberId
             );
             if (!project) {
-                return res.status(404).json({ error: "Project not found" });
+                return res
+                    .status(404)
+                    .json({ success: false, message: "Project not found" });
             }
-            res.json(project);
+            res.json({
+                success: true,
+                message: "Xóa thành viên thành công!",
+                data: project,
+            });
         } catch (error) {
-            res.status(400).json({ error: error.message });
+            res.status(400).json({ success: false, message: error.message });
         }
     }
 
@@ -117,11 +144,13 @@ class ProjectController {
                 req.params.id
             );
             if (progress === null) {
-                return res.status(404).json({ error: "Project not found" });
+                return res
+                    .status(404)
+                    .json({ success: false, message: "Project not found" });
             }
-            res.json({ progress });
+            res.json({ success: true, data: { progress } });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -129,11 +158,13 @@ class ProjectController {
         try {
             const project = await ProjectService.deleteProject(req.params.id);
             if (!project) {
-                return res.status(404).json({ error: "Project not found" });
+                return res
+                    .status(404)
+                    .json({ success: false, message: "Project not found" });
             }
-            res.json({ message: "Project deleted successfully" });
+            res.json({ success: true, message: "Xóa dự án thành công!" });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -142,9 +173,13 @@ class ProjectController {
             const { id } = req.params;
             const userId = req.user._id;
             const result = await ProjectService.registerForProject(id, userId);
-            res.status(200).json(result);
+            res.status(200).json({
+                success: true,
+                message: "Đăng ký tham gia dự án thành công!",
+                data: result,
+            });
         } catch (error) {
-            res.status(500).json({ message: error.message });
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -157,9 +192,13 @@ class ProjectController {
                 userId,
                 managerId
             );
-            res.status(200).json(result);
+            res.status(200).json({
+                success: true,
+                message: "Duyệt thành viên thành công!",
+                data: result,
+            });
         } catch (error) {
-            res.status(500).json({ message: error.message });
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -172,9 +211,13 @@ class ProjectController {
                 userId,
                 managerId
             );
-            res.status(200).json(result);
+            res.status(200).json({
+                success: true,
+                message: "Từ chối thành viên thành công!",
+                data: result,
+            });
         } catch (error) {
-            res.status(500).json({ message: error.message });
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -184,9 +227,13 @@ class ProjectController {
                 req.params.id,
                 req.user._id
             );
-            res.json(project);
+            res.json({
+                success: true,
+                message: "Hoàn thành dự án thành công!",
+                data: project,
+            });
         } catch (error) {
-            res.status(400).json({ error: error.message });
+            res.status(400).json({ success: false, message: error.message });
         }
     }
 
@@ -197,9 +244,13 @@ class ProjectController {
                 req.params.milestoneId,
                 req.user._id
             );
-            res.json(milestone);
+            res.json({
+                success: true,
+                message: "Hoàn thành milestone thành công!",
+                data: milestone,
+            });
         } catch (error) {
-            res.status(400).json({ error: error.message });
+            res.status(400).json({ success: false, message: error.message });
         }
     }
 
@@ -209,9 +260,9 @@ class ProjectController {
                 req.params.id,
                 req.params.milestoneId
             );
-            res.json(result);
+            res.json({ success: true, data: result });
         } catch (error) {
-            res.status(400).json({ error: error.message });
+            res.status(400).json({ success: false, message: error.message });
         }
     }
 
@@ -222,9 +273,13 @@ class ProjectController {
                 req.params.id,
                 req.body
             );
-            res.status(201).json(project);
+            res.status(201).json({
+                success: true,
+                message: "Tạo milestone thành công!",
+                data: project,
+            });
         } catch (error) {
-            res.status(400).json({ error: error.message });
+            res.status(400).json({ success: false, message: error.message });
         }
     }
 
@@ -236,9 +291,13 @@ class ProjectController {
                 req.params.milestoneId,
                 req.body
             );
-            res.json(milestone);
+            res.json({
+                success: true,
+                message: "Cập nhật milestone thành công!",
+                data: milestone,
+            });
         } catch (error) {
-            res.status(400).json({ error: error.message });
+            res.status(400).json({ success: false, message: error.message });
         }
     }
 
@@ -249,9 +308,13 @@ class ProjectController {
                 req.params.id,
                 req.params.milestoneId
             );
-            res.json(result);
+            res.json({
+                success: true,
+                message: "Xóa milestone thành công!",
+                data: result,
+            });
         } catch (error) {
-            res.status(400).json({ error: error.message });
+            res.status(400).json({ success: false, message: error.message });
         }
     }
 }

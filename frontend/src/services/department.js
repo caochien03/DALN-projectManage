@@ -3,7 +3,7 @@ import axiosInstance from "../utils/axios";
 // Get all departments
 export const getAllDepartments = async () => {
     const response = await axiosInstance.get("/api/departments");
-    return response.data;
+    return response.data.data;
 };
 
 // Create department

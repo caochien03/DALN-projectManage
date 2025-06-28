@@ -37,7 +37,9 @@ exports.uploadDocument = async (req, res) => {
             "members.user"
         );
         if (project && project.members.length > 0) {
-            const memberIds = project.members.map((member) => member.user._id);
+            const memberIds = project.members
+                .filter((member) => member.user && member.user._id)
+                .map((member) => member.user._id);
 
             // Tạo notification cho tất cả thành viên (trừ người upload)
             const notifications = memberIds

@@ -8,6 +8,7 @@ import {
 } from "../services/department";
 import { getAllUsers } from "../services/user";
 import Modal from "../components/Modal";
+import Loading from "../components/Loading";
 
 export default function Departments() {
     const [departments, setDepartments] = useState([]);
@@ -96,6 +97,10 @@ export default function Departments() {
             }
         }
     };
+
+    if (isLoading) {
+        return <Loading />;
+    }
 
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

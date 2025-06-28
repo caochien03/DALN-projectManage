@@ -16,8 +16,10 @@ export const uploadDocument = async (projectId, file) => {
 
 // Lấy danh sách tài liệu mới nhất của project
 export const getDocumentsByProject = async (projectId) => {
-    const res = await axiosInstance.get(`/api/projects/${projectId}/documents`);
-    return res.data;
+    const response = await axiosInstance.get(
+        `/api/projects/${projectId}/documents`
+    );
+    return response.data.data;
 };
 
 // Download tài liệu
@@ -31,7 +33,7 @@ export const downloadDocument = async (docId) => {
 // Lấy lịch sử phiên bản của tài liệu
 export const getDocumentVersions = async (docId) => {
     const res = await axiosInstance.get(`/api/documents/${docId}/versions`);
-    return res.data;
+    return res.data.data;
 };
 
 // Xóa tài liệu
@@ -43,5 +45,5 @@ export const deleteDocument = async (docId) => {
 // Lấy document detail theo ID
 export const getDocumentById = async (docId) => {
     const response = await axiosInstance.get(`/api/documents/${docId}`);
-    return response.data;
+    return response.data.data;
 };

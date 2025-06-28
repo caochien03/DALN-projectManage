@@ -7,6 +7,7 @@ import {
     deleteComment,
 } from "../services/comment";
 import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // members: [{_id, name, ...}] để gợi ý mention
 export default function CommentBox({ type, id, members = [], currentUser }) {

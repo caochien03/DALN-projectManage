@@ -7,9 +7,13 @@ class DepartmentController {
             const department = await DepartmentService.createDepartment(
                 req.body
             );
-            res.status(201).json(department);
+            res.status(201).json({
+                success: true,
+                message: "Tạo phòng ban thành công!",
+                data: department,
+            });
         } catch (error) {
-            res.status(400).json({ message: error.message });
+            res.status(400).json({ success: false, message: error.message });
         }
     }
 
@@ -17,9 +21,9 @@ class DepartmentController {
     static async getAllDepartments(req, res) {
         try {
             const departments = await DepartmentService.getAllDepartments();
-            res.json(departments);
+            res.json({ success: true, data: departments });
         } catch (error) {
-            res.status(500).json({ message: error.message });
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -32,11 +36,11 @@ class DepartmentController {
             if (!department) {
                 return res
                     .status(404)
-                    .json({ message: "Department not found" });
+                    .json({ success: false, message: "Department not found" });
             }
-            res.json(department);
+            res.json({ success: true, data: department });
         } catch (error) {
-            res.status(500).json({ message: error.message });
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -50,11 +54,15 @@ class DepartmentController {
             if (!department) {
                 return res
                     .status(404)
-                    .json({ message: "Department not found" });
+                    .json({ success: false, message: "Department not found" });
             }
-            res.json(department);
+            res.json({
+                success: true,
+                message: "Cập nhật phòng ban thành công!",
+                data: department,
+            });
         } catch (error) {
-            res.status(400).json({ message: error.message });
+            res.status(400).json({ success: false, message: error.message });
         }
     }
 
@@ -67,11 +75,11 @@ class DepartmentController {
             if (!department) {
                 return res
                     .status(404)
-                    .json({ message: "Department not found" });
+                    .json({ success: false, message: "Department not found" });
             }
-            res.json({ message: "Department deleted successfully" });
+            res.json({ success: true, message: "Xóa phòng ban thành công!" });
         } catch (error) {
-            res.status(500).json({ message: error.message });
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -81,9 +89,9 @@ class DepartmentController {
             const members = await DepartmentService.getDepartmentMembers(
                 req.params.id
             );
-            res.json(members);
+            res.json({ success: true, data: members });
         } catch (error) {
-            res.status(500).json({ message: error.message });
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -98,11 +106,15 @@ class DepartmentController {
             if (!department) {
                 return res
                     .status(404)
-                    .json({ message: "Department not found" });
+                    .json({ success: false, message: "Department not found" });
             }
-            res.json(department);
+            res.json({
+                success: true,
+                message: "Gán trưởng phòng thành công!",
+                data: department,
+            });
         } catch (error) {
-            res.status(400).json({ message: error.message });
+            res.status(400).json({ success: false, message: error.message });
         }
     }
 
@@ -112,9 +124,9 @@ class DepartmentController {
             const stats = await DepartmentService.getDepartmentStats(
                 req.params.id
             );
-            res.json(stats);
+            res.json({ success: true, data: stats });
         } catch (error) {
-            res.status(500).json({ message: error.message });
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 }

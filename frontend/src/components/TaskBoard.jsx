@@ -14,6 +14,8 @@ export default function TaskBoard({
     onTaskDelete,
     getUserName,
     onTaskStatusChangeOptimistic,
+    canEditTask,
+    canDeleteTask,
 }) {
     const getColumnColor = (status) => {
         switch (status) {
@@ -147,24 +149,34 @@ export default function TaskBoard({
                                                         )}
                                                     </div>
                                                     <div className="flex gap-2 mt-2">
-                                                        <button
-                                                            onClick={() =>
-                                                                onTaskEdit(task)
-                                                            }
-                                                            className="text-xs text-blue-600 hover:underline"
-                                                        >
-                                                            Sửa
-                                                        </button>
-                                                        <button
-                                                            onClick={() =>
-                                                                onTaskDelete(
-                                                                    task._id
-                                                                )
-                                                            }
-                                                            className="text-xs text-red-600 hover:underline"
-                                                        >
-                                                            Xóa
-                                                        </button>
+                                                        {canEditTask &&
+                                                            canEditTask(
+                                                                task
+                                                            ) && (
+                                                                <button
+                                                                    onClick={() =>
+                                                                        onTaskEdit(
+                                                                            task
+                                                                        )
+                                                                    }
+                                                                    className="text-xs text-blue-600 hover:underline"
+                                                                >
+                                                                    Sửa
+                                                                </button>
+                                                            )}
+                                                        {canDeleteTask &&
+                                                            canDeleteTask() && (
+                                                                <button
+                                                                    onClick={() =>
+                                                                        onTaskDelete(
+                                                                            task._id
+                                                                        )
+                                                                    }
+                                                                    className="text-xs text-red-600 hover:underline"
+                                                                >
+                                                                    Xóa
+                                                                </button>
+                                                            )}
                                                     </div>
                                                 </div>
                                             )}

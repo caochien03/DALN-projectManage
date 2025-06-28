@@ -3,7 +3,7 @@ import axiosInstance from "../utils/axios";
 // Get all projects
 export const getAllProjects = async () => {
     const response = await axiosInstance.get("/api/projects");
-    return response.data;
+    return response.data.data;
 };
 
 // Create project
@@ -30,7 +30,7 @@ export const deleteProject = async (projectId) => {
 // Lấy thông tin chi tiết project
 export const getProjectById = async (id) => {
     const response = await axiosInstance.get(`/api/projects/${id}`);
-    return response.data;
+    return response.data.data;
 };
 
 // Xác nhận hoàn thành project

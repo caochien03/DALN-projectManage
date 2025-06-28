@@ -7,18 +7,22 @@ class TaskController {
                 ...req.body,
                 assignedTo: req.body.assignedTo || req.user._id,
             });
-            res.status(201).json(task);
+            res.status(201).json({
+                success: true,
+                message: "Tạo task thành công!",
+                data: task,
+            });
         } catch (error) {
-            res.status(400).json({ error: error.message });
+            res.status(400).json({ success: false, message: error.message });
         }
     }
 
     static async getAllTasks(req, res) {
         try {
             const tasks = await TaskService.getAllTasks();
-            res.json(tasks);
+            res.json({ success: true, data: tasks });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -26,11 +30,13 @@ class TaskController {
         try {
             const task = await TaskService.getTaskById(req.params.id);
             if (!task) {
-                return res.status(404).json({ error: "Task not found" });
+                return res
+                    .status(404)
+                    .json({ success: false, message: "Task not found" });
             }
-            res.json(task);
+            res.json({ success: true, data: task });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -38,7 +44,9 @@ class TaskController {
         try {
             const task = await TaskService.getTaskById(req.params.id);
             if (!task) {
-                return res.status(404).json({ error: "Task not found" });
+                return res
+                    .status(404)
+                    .json({ success: false, message: "Task not found" });
             }
             // Kiểm tra quyền: chỉ cho phép nếu user là người được giao task hoặc là admin
             if (
@@ -47,17 +55,22 @@ class TaskController {
                 !task.assignedTo._id.equals(req.user._id) &&
                 req.user.role !== "admin"
             ) {
-                return res
-                    .status(403)
-                    .json({ error: "Bạn chỉ có thể cập nhật task của mình" });
+                return res.status(403).json({
+                    success: false,
+                    message: "Bạn chỉ có thể cập nhật task của mình",
+                });
             }
             const updatedTask = await TaskService.updateTask(
                 req.params.id,
                 req.body
             );
-            res.json(updatedTask);
+            res.json({
+                success: true,
+                message: "Cập nhật task thành công!",
+                data: updatedTask,
+            });
         } catch (error) {
-            res.status(400).json({ error: error.message });
+            res.status(400).json({ success: false, message: error.message });
         }
     }
 
@@ -68,29 +81,35 @@ class TaskController {
                 content: req.body.content,
             });
             if (!task) {
-                return res.status(404).json({ error: "Task not found" });
+                return res
+                    .status(404)
+                    .json({ success: false, message: "Task not found" });
             }
-            res.json(task);
+            res.json({
+                success: true,
+                message: "Thêm bình luận thành công!",
+                data: task,
+            });
         } catch (error) {
-            res.status(400).json({ error: error.message });
+            res.status(400).json({ success: false, message: error.message });
         }
     }
 
     static async getOverdueTasks(req, res) {
         try {
             const tasks = await TaskService.getOverdueTasks();
-            res.json(tasks);
+            res.json({ success: true, data: tasks });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 
     static async getTasksByStatus(req, res) {
         try {
             const tasks = await TaskService.getTasksByStatus(req.params.status);
-            res.json(tasks);
+            res.json({ success: true, data: tasks });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -99,9 +118,9 @@ class TaskController {
             const tasks = await TaskService.getTasksByProject(
                 req.params.projectId
             );
-            res.json(tasks);
+            res.json({ success: true, data: tasks });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -109,11 +128,13 @@ class TaskController {
         try {
             const task = await TaskService.deleteTask(req.params.id);
             if (!task) {
-                return res.status(404).json({ error: "Task not found" });
+                return res
+                    .status(404)
+                    .json({ success: false, message: "Task not found" });
             }
-            res.json({ message: "Task deleted successfully" });
+            res.json({ success: true, message: "Xóa task thành công!" });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 }

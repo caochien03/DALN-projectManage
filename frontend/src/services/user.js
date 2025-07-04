@@ -35,3 +35,14 @@ export const getUserTasks = async () => {
     const response = await axiosInstance.get("/api/users/tasks");
     return response.data.data;
 };
+
+export async function uploadProfileAvatar(file) {
+    const formData = new FormData();
+    formData.append("avatar", file);
+    const res = await axiosInstance.put("/api/auth/profile/avatar", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
+    return res.data;
+}

@@ -1,4 +1,6 @@
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { toast } from "react-toastify";
+import PopConfirmFloating from "./PopConfirmFloating";
 
 const TASK_STATUSES = [
     { key: "todo", label: "To Do" },
@@ -74,7 +76,7 @@ export default function TaskBoard({
             };
             await onTaskUpdate(task._id, taskData);
         } catch (error) {
-            alert(
+            toast.error(
                 error.response?.data?.error ||
                     "Không thể cập nhật trạng thái task"
             );
@@ -166,16 +168,18 @@ export default function TaskBoard({
                                                             )}
                                                         {canDeleteTask &&
                                                             canDeleteTask() && (
-                                                                <button
-                                                                    onClick={() =>
+                                                                <PopConfirmFloating
+                                                                    title="Bạn có chắc chắn muốn xóa task này?"
+                                                                    onConfirm={() =>
                                                                         onTaskDelete(
                                                                             task._id
                                                                         )
                                                                     }
-                                                                    className="text-xs text-red-600 hover:underline"
                                                                 >
-                                                                    Xóa
-                                                                </button>
+                                                                    <button className="text-xs text-red-600 hover:underline">
+                                                                        Xóa
+                                                                    </button>
+                                                                </PopConfirmFloating>
                                                             )}
                                                     </div>
                                                 </div>

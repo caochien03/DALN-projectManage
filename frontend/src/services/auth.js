@@ -21,7 +21,7 @@ export const logout = () => {
 
 // Change Password
 export const changePassword = async (currentPassword, newPassword) => {
-    const response = await axiosInstance.post("/api/auth/change-password", {
+    const response = await axiosInstance.put("/api/auth/password", {
         currentPassword,
         newPassword,
     });

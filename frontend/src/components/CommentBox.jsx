@@ -8,6 +8,7 @@ import {
 } from "../services/comment";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import PopConfirmFloating from "./PopConfirmFloating";
 
 // members: [{_id, name, ...}] để gợi ý mention
 export default function CommentBox({ type, id, members = [], currentUser }) {
@@ -95,7 +96,6 @@ export default function CommentBox({ type, id, members = [], currentUser }) {
 
     // Xóa bình luận
     const handleDelete = async (commentId) => {
-        if (!window.confirm("Bạn có chắc muốn xóa bình luận này?")) return;
         try {
             await deleteComment(commentId);
             toast.success("Đã xóa bình luận");
@@ -141,12 +141,14 @@ export default function CommentBox({ type, id, members = [], currentUser }) {
                             {(currentUser?.role === "admin" ||
                                 String(currentUser?._id) ===
                                     String(c.author?._id)) && (
-                                <button
-                                    className="text-xs text-red-500 hover:underline ml-2"
-                                    onClick={() => handleDelete(c._id)}
+                                <PopConfirmFloating
+                                    title="Bạn có chắc muốn xóa bình luận này?"
+                                    onConfirm={() => handleDelete(c._id)}
                                 >
-                                    Xóa
-                                </button>
+                                    <button className="text-xs text-red-500 hover:underline ml-2">
+                                        Xóa
+                                    </button>
+                                </PopConfirmFloating>
                             )}
                         </div>
                     ))}

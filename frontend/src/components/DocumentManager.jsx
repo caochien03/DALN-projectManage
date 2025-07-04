@@ -7,6 +7,7 @@ import {
     deleteDocument,
 } from "../services/document";
 import { toast } from "react-toastify";
+import PopConfirmFloating from "./PopConfirmFloating";
 
 export default function DocumentManager({
     projectId,
@@ -85,7 +86,6 @@ export default function DocumentManager({
     };
 
     const handleDelete = async (doc) => {
-        if (!window.confirm("Bạn có chắc muốn xóa tài liệu này?")) return;
         try {
             await deleteDocument(doc._id);
             toast.success("Đã xóa tài liệu");
@@ -169,12 +169,14 @@ export default function DocumentManager({
                                         Phiên bản
                                     </button>
                                     {canDelete && (
-                                        <button
-                                            onClick={() => handleDelete(doc)}
-                                            className="text-red-600 hover:underline"
+                                        <PopConfirmFloating
+                                            title="Bạn có chắc muốn xóa tài liệu này?"
+                                            onConfirm={() => handleDelete(doc)}
                                         >
-                                            Xóa
-                                        </button>
+                                            <button className="text-red-600 hover:underline">
+                                                Xóa
+                                            </button>
+                                        </PopConfirmFloating>
                                     )}
                                 </td>
                             </tr>

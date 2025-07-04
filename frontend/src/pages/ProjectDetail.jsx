@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import { getAllUsers } from "../services/user";
 import { getAllDepartments } from "../services/department";
 import { createTask, updateTask, deleteTask } from "../services/task";
@@ -20,6 +21,7 @@ import DocumentManager from "../components/DocumentManager";
 import CommentBox from "../components/CommentBox";
 import Loading from "../components/Loading";
 import PermissionNotice from "../components/PermissionNotice";
+import PopConfirmFloating from "../components/PopConfirmFloating";
 
 export default function ProjectDetail() {
     const { id } = useParams();
@@ -163,13 +165,12 @@ export default function ProjectDetail() {
     };
 
     const handleDeleteTask = async (taskId) => {
-        if (!window.confirm("Bạn có chắc chắn muốn xóa task này?")) return;
         setTaskLoading(true);
         try {
             await deleteTask(taskId);
             fetchData();
         } catch (err) {
-            alert(err.response?.data?.message || "Không thể xóa task");
+            toast.error(err.response?.data?.message || "Không thể xóa task");
         } finally {
             setTaskLoading(false);
         }
@@ -234,18 +235,12 @@ export default function ProjectDetail() {
 
     // Xác nhận hoàn thành project
     const handleCompleteProject = async () => {
-        if (
-            !window.confirm(
-                "Bạn có chắc chắn muốn xác nhận hoàn thành dự án này?"
-            )
-        )
-            return;
         try {
             await completeProject(id);
             await fetchData(); // Lấy lại toàn bộ dữ liệu project mới nhất
-            alert("Đã xác nhận hoàn thành dự án");
+            toast.success("Đã xác nhận hoàn thành dự án");
         } catch (err) {
-            alert(
+            toast.error(
                 err.response?.data?.error ||
                     "Không thể xác nhận hoàn thành dự án"
             );
@@ -254,18 +249,12 @@ export default function ProjectDetail() {
 
     // Xác nhận hoàn thành milestone
     const handleCompleteMilestone = async (milestoneId) => {
-        if (
-            !window.confirm(
-                "Bạn có chắc chắn muốn xác nhận hoàn thành milestone này?"
-            )
-        )
-            return;
         setMilestoneLoading(true);
         setMilestoneError("");
         try {
             await completeMilestone(id, milestoneId);
             await fetchData(); // Lấy lại toàn bộ dữ liệu project mới nhất
-            alert("Đã xác nhận hoàn thành milestone");
+            toast.success("Đã xác nhận hoàn thành milestone");
         } catch (err) {
             setMilestoneError(
                 err.response?.data?.error ||
@@ -281,11 +270,11 @@ export default function ProjectDetail() {
         try {
             const result = await checkMilestoneConsistency(id, milestoneId);
             if (result.updated) {
-                alert(result.message);
+                toast.success(result.message);
                 fetchData();
             }
         } catch (err) {
-            alert(
+            toast.error(
                 err.response?.data?.error ||
                     "Không thể kiểm tra tính nhất quán của milestone"
             );
@@ -293,26 +282,28 @@ export default function ProjectDetail() {
     };
 
     const handleApprove = async (userId) => {
-        if (!window.confirm("Duyệt thành viên này?")) return;
         const user = users.find((u) => u._id === userId);
         console.log("APPROVE userId:", userId, "user:", user);
         try {
             await approveMember(id, userId);
-            alert("Đã duyệt thành viên!");
+            toast.success("Đã duyệt thành viên!");
             fetchData();
         } catch (err) {
-            alert(err.response?.data?.error || "Không thể duyệt thành viên");
+            toast.error(
+                err.response?.data?.error || "Không thể duyệt thành viên"
+            );
         }
     };
 
     const handleReject = async (userId) => {
-        if (!window.confirm("Từ chối thành viên này?")) return;
         try {
             await rejectMember(id, userId);
-            alert("Đã từ chối thành viên!");
+            toast.success("Đã từ chối thành viên!");
             fetchData();
         } catch (err) {
-            alert(err.response?.data?.error || "Không thể từ chối thành viên");
+            toast.error(
+                err.response?.data?.error || "Không thể từ chối thành viên"
+            );
         }
     };
 
@@ -330,7 +321,7 @@ export default function ProjectDetail() {
                 dueDate: "",
             });
             fetchData();
-            alert("Đã tạo milestone thành công!");
+            toast.success("Đã tạo milestone thành công!");
         } catch (err) {
             setMilestoneError(
                 err.response?.data?.error || "Không thể tạo milestone"
@@ -366,7 +357,7 @@ export default function ProjectDetail() {
                 dueDate: "",
             });
             fetchData();
-            alert("Đã cập nhật milestone thành công!");
+            toast.success("Đã cập nhật milestone thành công!");
         } catch (err) {
             setMilestoneError(
                 err.response?.data?.error || "Không thể cập nhật milestone"
@@ -378,14 +369,13 @@ export default function ProjectDetail() {
 
     // Xóa milestone
     const handleDeleteMilestone = async (milestoneId) => {
-        if (!window.confirm("Bạn có chắc chắn muốn xóa milestone này?")) return;
         setMilestoneLoading(true);
         try {
             await deleteMilestone(id, milestoneId);
             fetchData();
-            alert("Đã xóa milestone thành công!");
+            toast.success("Đã xóa milestone thành công!");
         } catch (err) {
-            alert(err.response?.data?.error || "Không thể xóa milestone");
+            toast.error(err.response?.data?.error || "Không thể xóa milestone");
         } finally {
             setMilestoneLoading(false);
         }
@@ -402,12 +392,15 @@ export default function ProjectDetail() {
             <div className="flex justify-between items-center mb-4">
                 <h1 className="text-2xl font-bold">{project.name}</h1>
                 {project.status === "open" && isProjectManager && (
-                    <button
-                        onClick={handleCompleteProject}
-                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                    <PopConfirmFloating
+                        title="Bạn có chắc chắn muốn xác nhận hoàn thành dự án này?"
+                        onConfirm={handleCompleteProject}
+                        okText="Xác nhận"
                     >
-                        Xác nhận hoàn thành
-                    </button>
+                        <button className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                            Xác nhận hoàn thành
+                        </button>
+                    </PopConfirmFloating>
                 )}
             </div>
             <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -474,19 +467,26 @@ export default function ProjectDetail() {
                                         </span>
                                         <div className="flex gap-1">
                                             {m.status === "pending" && (
-                                                <button
-                                                    onClick={() =>
+                                                <PopConfirmFloating
+                                                    title="Bạn có chắc chắn muốn xác nhận hoàn thành milestone này?"
+                                                    onConfirm={() =>
                                                         handleCompleteMilestone(
                                                             m._id
                                                         )
                                                     }
-                                                    disabled={milestoneLoading}
-                                                    className="text-sm bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
+                                                    okText="Xác nhận"
                                                 >
-                                                    {milestoneLoading
-                                                        ? "Đang xử lý..."
-                                                        : "Hoàn thành"}
-                                                </button>
+                                                    <button
+                                                        disabled={
+                                                            milestoneLoading
+                                                        }
+                                                        className="text-sm bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
+                                                    >
+                                                        {milestoneLoading
+                                                            ? "Đang xử lý..."
+                                                            : "Hoàn thành"}
+                                                    </button>
+                                                </PopConfirmFloating>
                                             )}
                                             {m.status === "completed" && (
                                                 <button
@@ -512,16 +512,18 @@ export default function ProjectDetail() {
                                                     >
                                                         Sửa
                                                     </button>
-                                                    <button
-                                                        onClick={() =>
+                                                    <PopConfirmFloating
+                                                        title="Bạn có chắc chắn muốn xóa milestone này?"
+                                                        onConfirm={() =>
                                                             handleDeleteMilestone(
                                                                 m._id
                                                             )
                                                         }
-                                                        className="text-sm bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
                                                     >
-                                                        Xóa
-                                                    </button>
+                                                        <button className="text-sm bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700">
+                                                            Xóa
+                                                        </button>
+                                                    </PopConfirmFloating>
                                                 </>
                                             )}
                                         </div>
@@ -611,22 +613,28 @@ export default function ProjectDetail() {
                                             className="flex items-center gap-2"
                                         >
                                             {user?.name || userId}
-                                            <button
-                                                onClick={() =>
+                                            <PopConfirmFloating
+                                                title="Duyệt thành viên này?"
+                                                onConfirm={() =>
                                                     handleApprove(userId)
                                                 }
-                                                className="bg-green-600 text-white px-2 py-1 rounded"
+                                                okText="Duyệt"
                                             >
-                                                Duyệt
-                                            </button>
-                                            <button
-                                                onClick={() =>
+                                                <button className="bg-green-600 text-white px-2 py-1 rounded">
+                                                    Duyệt
+                                                </button>
+                                            </PopConfirmFloating>
+                                            <PopConfirmFloating
+                                                title="Từ chối thành viên này?"
+                                                onConfirm={() =>
                                                     handleReject(userId)
                                                 }
-                                                className="bg-red-600 text-white px-2 py-1 rounded"
+                                                okText="Từ chối"
                                             >
-                                                Từ chối
-                                            </button>
+                                                <button className="bg-red-600 text-white px-2 py-1 rounded">
+                                                    Từ chối
+                                                </button>
+                                            </PopConfirmFloating>
                                         </li>
                                     );
                                 })}

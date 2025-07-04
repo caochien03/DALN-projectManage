@@ -27,7 +27,10 @@ const auth = async (req, res, next) => {
         next();
     } catch (error) {
         console.log("Auth error:", error.message); // Debug log
-        res.status(401).json({ error: "Please authenticate" });
+        res.status(401).json({
+            success: false,
+            message: "Please authenticate",
+        });
     }
 };
 

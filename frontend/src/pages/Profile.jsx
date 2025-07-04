@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getCurrentUser, updateProfile } from "../services/auth";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../components/Loading";
+import { uploadProfileAvatar } from "../services/user";
+import { getAllDepartments } from "../services/department";
 
 export default function Profile() {
     const [formData, setFormData] = useState({
@@ -11,7 +13,8 @@ export default function Profile() {
         position: "",
         phone: "",
         address: "",
-        avatarUrl: "",
+        avatar: "",
+        department: "",
         linkedin: "",
         twitter: "",
         github: "",
@@ -19,10 +22,22 @@ export default function Profile() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+    const fileInputRef = useRef();
+    const [departments, setDepartments] = useState([]);
 
     useEffect(() => {
         fetchProfile();
+        fetchDepartments();
     }, []);
+
+    const fetchDepartments = async () => {
+        try {
+            const data = await getAllDepartments();
+            setDepartments(data);
+        } catch {
+            setDepartments([]);
+        }
+    };
 
     const fetchProfile = async () => {
         setIsLoading(true);
@@ -34,7 +49,8 @@ export default function Profile() {
                 position: user.position || "",
                 phone: user.phone || "",
                 address: user.address || "",
-                avatarUrl: user.avatarUrl || "",
+                avatar: user.avatar || "",
+                department: user.department?._id || user.department || "",
                 linkedin: user.linkedin || "",
                 twitter: user.twitter || "",
                 github: user.github || "",
@@ -63,6 +79,43 @@ export default function Profile() {
         }
     };
 
+    const handleAvatarClick = () => {
+        fileInputRef.current.click();
+    };
+
+    const handleAvatarChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setIsLoading(true);
+        try {
+            const data = await uploadProfileAvatar(file);
+            if (data.success && data.avatar) {
+                setFormData((prev) => ({ ...prev, avatar: data.avatar }));
+                // Cập nhật localStorage user
+                const user = JSON.parse(localStorage.getItem("user"));
+                if (user) {
+                    user.avatar = data.avatar;
+                    localStorage.setItem("user", JSON.stringify(user));
+                }
+                setSuccess("Cập nhật ảnh đại diện thành công!");
+            } else {
+                setError(data.message || "Upload thất bại");
+            }
+        } catch {
+            setError("Upload thất bại");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const getAvatarUrl = (avatar) => {
+        if (!avatar)
+            return "https://www.rainforest-alliance.org/wp-content/uploads/2021/06/capybara-square-1.jpg.optimal.jpg";
+        return avatar.startsWith("http")
+            ? avatar
+            : `http://localhost:8080${avatar}`;
+    };
+
     if (isLoading) {
         return <Loading />;
     }
@@ -77,15 +130,20 @@ export default function Profile() {
                 {/* Avatar */}
                 <div className="flex flex-col items-center">
                     <img
-                        src={
-                            formData.avatarUrl ||
-                            "https://www.rainforest-alliance.org/wp-content/uploads/2021/06/capybara-square-1.jpg.optimal.jpg"
-                        }
+                        src={getAvatarUrl(formData.avatar)}
                         alt="Avatar"
-                        className="w-32 h-32 rounded-full border-4 border-indigo-500 shadow-md object-cover"
+                        className="w-32 h-32 rounded-full border-4 border-indigo-500 shadow-md object-cover cursor-pointer"
+                        onClick={handleAvatarClick}
+                    />
+                    <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        ref={fileInputRef}
+                        onChange={handleAvatarChange}
                     />
                     <span className="mt-4 text-sm text-gray-500 text-center">
-                        Nhập URL ảnh đại diện nếu muốn thay đổi
+                        Nhấn vào ảnh để thay đổi ảnh đại diện
                     </span>
                 </div>
 
@@ -126,11 +184,6 @@ export default function Profile() {
                             type: "text",
                         },
                         { label: "Địa chỉ", key: "address", type: "text" },
-                        {
-                            label: "URL ảnh đại diện (tùy chọn)",
-                            key: "avatarUrl",
-                            type: "url",
-                        },
                     ].map(({ label, key, type, required }) => (
                         <div key={key}>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -150,6 +203,18 @@ export default function Profile() {
                             />
                         </div>
                     ))}
+
+                    {/* Department select */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Phòng ban
+                        </label>
+                        <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-sm">
+                            {departments.find(
+                                (dep) => dep._id === formData.department
+                            )?.name || "Chưa có"}
+                        </div>
+                    </div>
 
                     {/* Liên kết mạng xã hội */}
                     <div className="md:col-span-2 bg-gray-50 p-4 rounded-lg border mt-4">

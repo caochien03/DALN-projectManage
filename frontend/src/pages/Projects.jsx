@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import {
     getAllProjects,
     createProject,
@@ -12,6 +13,7 @@ import { getAllDepartments } from "../services/department";
 import { getAllUsers } from "../services/user";
 import Modal from "../components/Modal";
 import Loading from "../components/Loading";
+import PopConfirmFloating from "../components/PopConfirmFloating";
 
 const statuses = ["open", "close"];
 
@@ -134,13 +136,11 @@ export default function Projects() {
     };
 
     const handleDelete = async (projectId) => {
-        if (window.confirm("Are you sure you want to delete this project?")) {
-            try {
-                await deleteProject(projectId);
-                fetchProjects();
-            } catch {
-                setError("Failed to delete project");
-            }
+        try {
+            await deleteProject(projectId);
+            fetchProjects();
+        } catch {
+            setError("Failed to delete project");
         }
     };
 
@@ -199,10 +199,10 @@ export default function Projects() {
         setRegistering(true);
         try {
             await registerForProject(selectedProject._id);
-            alert("Đã gửi yêu cầu đăng ký, chờ duyệt!");
+            toast.success("Đã gửi yêu cầu đăng ký, chờ duyệt!");
             setShowInfoModal(false);
         } catch (err) {
-            alert(
+            toast.error(
                 err.response?.data?.error || "Không thể đăng ký tham gia dự án"
             );
         } finally {
@@ -626,17 +626,21 @@ export default function Projects() {
                                                     >
                                                         <PencilIcon className="h-5 w-5" />
                                                     </button>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
+                                                    <PopConfirmFloating
+                                                        title="Are you sure you want to delete this project?"
+                                                        onConfirm={() => {
                                                             handleDelete(
                                                                 project._id
                                                             );
                                                         }}
-                                                        className="text-red-600 hover:text-red-900"
                                                     >
-                                                        <TrashIcon className="h-5 w-5" />
-                                                    </button>
+                                                        <button
+                                                            type="button"
+                                                            className="text-red-600 hover:text-red-900"
+                                                        >
+                                                            <TrashIcon className="h-5 w-5" />
+                                                        </button>
+                                                    </PopConfirmFloating>
                                                 </div>
                                             )}
                                         </div>

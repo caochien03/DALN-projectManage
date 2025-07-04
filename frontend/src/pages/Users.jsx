@@ -9,6 +9,7 @@ import {
 import { getAllDepartments } from "../services/department";
 import Modal from "../components/Modal";
 import Loading from "../components/Loading";
+import PopConfirmFloating from "../components/PopConfirmFloating";
 
 export default function Users() {
     const [users, setUsers] = useState([]);
@@ -103,13 +104,11 @@ export default function Users() {
     };
 
     const handleDelete = async (userId) => {
-        if (window.confirm("Are you sure you want to delete this user?")) {
-            try {
-                await deleteUser(userId);
-                fetchUsers();
-            } catch {
-                setError("Failed to delete user");
-            }
+        try {
+            await deleteUser(userId);
+            fetchUsers();
+        } catch {
+            setError("Failed to delete user");
         }
     };
 
@@ -410,6 +409,30 @@ export default function Users() {
                                         </th>
                                         <th
                                             scope="col"
+                                            className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                                        >
+                                            Department
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                                        >
+                                            Position
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                                        >
+                                            Phone
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                                        >
+                                            Address
+                                        </th>
+                                        <th
+                                            scope="col"
                                             className="relative py-3.5 pl-3 pr-4 sm:pr-6"
                                         >
                                             <span className="sr-only">
@@ -430,6 +453,20 @@ export default function Users() {
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                                 {user.role}
                                             </td>
+                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                {user.department?.name ||
+                                                    user.department ||
+                                                    ""}
+                                            </td>
+                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                {user.position}
+                                            </td>
+                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                {user.phone}
+                                            </td>
+                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                {user.address}
+                                            </td>
                                             <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                                                 <button
                                                     onClick={() =>
@@ -439,14 +476,16 @@ export default function Users() {
                                                 >
                                                     <PencilIcon className="h-5 w-5" />
                                                 </button>
-                                                <button
-                                                    onClick={() =>
+                                                <PopConfirmFloating
+                                                    title="Are you sure you want to delete this user?"
+                                                    onConfirm={() =>
                                                         handleDelete(user._id)
                                                     }
-                                                    className="text-red-600 hover:text-red-900"
                                                 >
-                                                    <TrashIcon className="h-5 w-5" />
-                                                </button>
+                                                    <button className="text-red-600 hover:text-red-900">
+                                                        <TrashIcon className="h-5 w-5" />
+                                                    </button>
+                                                </PopConfirmFloating>
                                             </td>
                                         </tr>
                                     ))}

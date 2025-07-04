@@ -128,3 +128,18 @@ exports.getUserProjects = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+exports.uploadAvatar = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ message: "User not found" });
+        if (req.file) {
+            user.avatar = `/uploads/avatars/${req.file.filename}`;
+            await user.save();
+            return res.json({ success: true, avatar: user.avatar });
+        }
+        res.status(400).json({ message: "No file uploaded" });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};

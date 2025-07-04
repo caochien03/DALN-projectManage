@@ -9,6 +9,7 @@ import {
 import { getAllUsers } from "../services/user";
 import Modal from "../components/Modal";
 import Loading from "../components/Loading";
+import PopConfirmFloating from "../components/PopConfirmFloating";
 
 export default function Departments() {
     const [departments, setDepartments] = useState([]);
@@ -86,15 +87,11 @@ export default function Departments() {
     };
 
     const handleDelete = async (departmentId) => {
-        if (
-            window.confirm("Are you sure you want to delete this department?")
-        ) {
-            try {
-                await deleteDepartment(departmentId);
-                fetchDepartments();
-            } catch {
-                setError("Failed to delete department");
-            }
+        try {
+            await deleteDepartment(departmentId);
+            fetchDepartments();
+        } catch {
+            setError("Failed to delete department");
         }
     };
 
@@ -312,16 +309,18 @@ export default function Departments() {
                                                 >
                                                     <PencilIcon className="h-5 w-5" />
                                                 </button>
-                                                <button
-                                                    onClick={() =>
+                                                <PopConfirmFloating
+                                                    title="Are you sure you want to delete this department?"
+                                                    onConfirm={() =>
                                                         handleDelete(
                                                             department._id
                                                         )
                                                     }
-                                                    className="text-red-600 hover:text-red-900"
                                                 >
-                                                    <TrashIcon className="h-5 w-5" />
-                                                </button>
+                                                    <button className="text-red-600 hover:text-red-900">
+                                                        <TrashIcon className="h-5 w-5" />
+                                                    </button>
+                                                </PopConfirmFloating>
                                             </td>
                                         </tr>
                                     ))}

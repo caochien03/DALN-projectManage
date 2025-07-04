@@ -41,9 +41,23 @@ instance.interceptors.response.use(
     },
     (error) => {
         if (error.response?.status === 401) {
-            localStorage.removeItem("token");
-            window.location.href = "/login";
-            toast.error("Phiên đăng nhập đã hết hạn");
+            const errorMessage = error.response?.data?.message || "";
+            // Nếu là lỗi xác thực token thì mới logout
+            if (
+                errorMessage === "Please authenticate" ||
+                errorMessage === "No authorization header" ||
+                errorMessage === "No token provided" ||
+                errorMessage === "jwt expired" ||
+                errorMessage === "invalid token" ||
+                errorMessage === "User not found"
+            ) {
+                localStorage.removeItem("token");
+                window.location.href = "/login";
+                toast.error("Phiên đăng nhập đã hết hạn");
+            } else {
+                // Các lỗi 401 khác (ví dụ: sai mật khẩu) chỉ toast lỗi
+                toast.error(errorMessage || "Có lỗi xảy ra");
+            }
         } else {
             const errorMessage =
                 error.response?.data?.message || "Có lỗi xảy ra";

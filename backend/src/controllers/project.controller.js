@@ -1,6 +1,9 @@
 const ProjectService = require("../services/project.service");
 const User = require("../models/User");
 const Project = require("../models/Project");
+const Task = require("../models/Task");
+const Document = require("../models/Document");
+const Comment = require("../models/Comment");
 
 class ProjectController {
     static async createProject(req, res) {
@@ -156,6 +159,12 @@ class ProjectController {
 
     static async deleteProject(req, res) {
         try {
+            // Xóa tất cả task liên quan đến project này
+            await Task.deleteMany({ project: req.params.id });
+            // Xóa tất cả document liên quan đến project này
+            await Document.deleteMany({ project: req.params.id });
+            // Xóa tất cả comment liên quan đến project này
+            await Comment.deleteMany({ project: req.params.id });
             const project = await ProjectService.deleteProject(req.params.id);
             if (!project) {
                 return res

@@ -18,6 +18,8 @@ import NotificationPage from "./pages/NotificationPage";
 import DashboardMember from "./pages/DashboardMember";
 import { NotificationProvider } from "./components/NotificationProvider";
 import ChangePassword from "./pages/ChangePassword";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 function PrivateRoute({ children }) {
     const token = localStorage.getItem("token");
@@ -127,6 +129,16 @@ export default function App() {
                                 </PrivateRoute>
                             }
                         />
+                        <Route
+                            path="/forgot-password"
+                            element={
+                                <PrivateRoute>
+                                    <MainLayout>
+                                        <ForgotPassword />
+                                    </MainLayout>
+                                </PrivateRoute>
+                            }
+                        />
                         {/* <Route
                             path="/dashboard"
                             element={
@@ -137,6 +149,10 @@ export default function App() {
                                 </PrivateRoute>
                             }
                         /> */}
+                        <Route
+                            path="/reset-password"
+                            element={<ResetPassword />}
+                        />
                     </Routes>
                 </NotificationProvider>
             </Router>

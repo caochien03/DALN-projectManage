@@ -1,4 +1,8 @@
 const User = require("../models/User");
+const Task = require("../models/Task");
+const Comment = require("../models/Comment");
+const Document = require("../models/Document");
+const Project = require("../models/Project");
 
 exports.createUser = async (req, res) => {
     try {
@@ -36,6 +40,18 @@ exports.updateUser = async (req, res) => {
 
 exports.deleteUser = async (req, res) => {
     try {
+        // Cập nhật các liên kết trước khi xóa user
+        await Task.updateMany(
+            { assignedTo: req.params.id },
+            { assignedTo: null }
+        );
+        await Comment.deleteMany({ author: req.params.id });
+        await Document.deleteMany({ uploadedBy: req.params.id });
+        await Project.updateMany(
+            {},
+            { $pull: { members: { user: req.params.id } } }
+        );
+        // Xóa user
         const user = await User.findByIdAndDelete(req.params.id);
         if (!user) {
             return res

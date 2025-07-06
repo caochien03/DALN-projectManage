@@ -4,6 +4,9 @@ const DepartmentController = require("../controllers/department.controller");
 const auth = require("../middleware/auth");
 const authorize = require("../middleware/authorize");
 
+// Search departments
+router.get("/search", auth, DepartmentController.searchDepartments);
+
 // Create department (admin only)
 router.post(
     "/",
@@ -36,14 +39,6 @@ router.delete(
 
 // Get department members
 router.get("/:id/members", auth, DepartmentController.getDepartmentMembers);
-
-// Assign manager to department (admin only)
-router.post(
-    "/:id/manager",
-    auth,
-    authorize(["admin"]),
-    DepartmentController.assignManager
-);
 
 // Get department statistics
 router.get("/:id/stats", auth, DepartmentController.getDepartmentStats);

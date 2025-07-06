@@ -12,10 +12,6 @@ const departmentSchema = new mongoose.Schema(
             type: String,
             trim: true,
         },
-        manager: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-        },
         createdAt: {
             type: Date,
             default: Date.now,
@@ -23,10 +19,6 @@ const departmentSchema = new mongoose.Schema(
         updatedAt: {
             type: Date,
             default: Date.now,
-        },
-        isActive: {
-            type: Boolean,
-            default: true,
         },
     },
     {

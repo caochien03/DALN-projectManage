@@ -1,4 +1,5 @@
 const TaskService = require("../services/task.service");
+const Comment = require("../models/Comment");
 
 class TaskController {
     static async createTask(req, res) {
@@ -126,6 +127,7 @@ class TaskController {
 
     static async deleteTask(req, res) {
         try {
+            await Comment.deleteMany({ task: req.params.id });
             const task = await TaskService.deleteTask(req.params.id);
             if (!task) {
                 return res

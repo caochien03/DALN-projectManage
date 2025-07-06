@@ -1,10 +1,19 @@
 import { useState, useEffect } from "react";
-import { PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import {
-    getAllUsers,
+    PlusIcon,
+    PencilIcon,
+    TrashIcon,
+    MagnifyingGlassIcon,
+    FunnelIcon,
+    ChartBarIcon,
+} from "@heroicons/react/24/outline";
+import {
+    getAllUsersWithProjectStats,
     createUser,
     updateUser,
     deleteUser,
+    searchUsers,
+    getUserStats,
 } from "../services/user";
 import { getAllDepartments } from "../services/department";
 import Modal from "../components/Modal";
@@ -17,6 +26,12 @@ export default function Users() {
     const [error, setError] = useState("");
     const [showForm, setShowForm] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [filters, setFilters] = useState({
+        role: "all",
+        department: "all",
+    });
+    const [userStats, setUserStats] = useState(null);
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -31,12 +46,23 @@ export default function Users() {
 
     useEffect(() => {
         fetchUsers();
+        fetchDepartments();
+        fetchUserStats();
     }, []);
 
     const fetchUsers = async () => {
         setIsLoading(true);
         try {
-            const data = await getAllUsers();
+            let data;
+            if (
+                searchTerm.trim() ||
+                filters.role !== "all" ||
+                filters.department !== "all"
+            ) {
+                data = await searchUsers(searchTerm.trim(), filters);
+            } else {
+                data = await getAllUsersWithProjectStats();
+            }
             setUsers(data);
         } catch {
             setError("Failed to fetch users");
@@ -54,11 +80,14 @@ export default function Users() {
         }
     };
 
-    useEffect(() => {
-        if (showForm) {
-            fetchDepartments();
+    const fetchUserStats = async () => {
+        try {
+            const data = await getUserStats();
+            setUserStats(data);
+        } catch {
+            // Không hiển thị error vì stats không quan trọng
         }
-    }, [showForm]);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -112,6 +141,26 @@ export default function Users() {
         }
     };
 
+    const handleSearch = () => {
+        fetchUsers();
+    };
+
+    const handleFilterChange = (filterType, value) => {
+        setFilters((prev) => ({
+            ...prev,
+            [filterType]: value,
+        }));
+    };
+
+    const handleClearFilters = () => {
+        setSearchTerm("");
+        setFilters({
+            role: "all",
+            department: "all",
+        });
+        fetchUsers();
+    };
+
     if (isLoading) {
         return <Loading />;
     }
@@ -158,6 +207,158 @@ export default function Users() {
                     role="alert"
                 >
                     <span className="block sm:inline">{error}</span>
+                </div>
+            )}
+
+            {/* User Statistics */}
+            {userStats && (
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                        <div className="flex items-center">
+                            <ChartBarIcon className="h-8 w-8 text-blue-600" />
+                            <div className="ml-3">
+                                <h3 className="text-sm font-medium text-blue-900">
+                                    Tổng số user
+                                </h3>
+                                <p className="text-2xl font-semibold text-blue-700">
+                                    {userStats.total}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-red-50 p-4 rounded-lg">
+                        <div className="flex items-center">
+                            <ChartBarIcon className="h-8 w-8 text-red-600" />
+                            <div className="ml-3">
+                                <h3 className="text-sm font-medium text-red-900">
+                                    Admin
+                                </h3>
+                                <p className="text-2xl font-semibold text-red-700">
+                                    {userStats.byRole.admin}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-yellow-50 p-4 rounded-lg">
+                        <div className="flex items-center">
+                            <ChartBarIcon className="h-8 w-8 text-yellow-600" />
+                            <div className="ml-3">
+                                <h3 className="text-sm font-medium text-yellow-900">
+                                    Manager
+                                </h3>
+                                <p className="text-2xl font-semibold text-yellow-700">
+                                    {userStats.byRole.manager}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-green-50 p-4 rounded-lg">
+                        <div className="flex items-center">
+                            <ChartBarIcon className="h-8 w-8 text-green-600" />
+                            <div className="ml-3">
+                                <h3 className="text-sm font-medium text-green-900">
+                                    Member
+                                </h3>
+                                <p className="text-2xl font-semibold text-green-700">
+                                    {userStats.byRole.member}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Search and Filter */}
+            <div className="mt-6 flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                    <div className="relative">
+                        <input
+                            type="text"
+                            placeholder="Tìm kiếm theo tên, email, vị trí..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onKeyPress={(e) =>
+                                e.key === "Enter" && handleSearch()
+                            }
+                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm pl-10"
+                        />
+                        <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    </div>
+                </div>
+                <div className="flex items-center gap-4">
+                    <select
+                        value={filters.role}
+                        onChange={(e) =>
+                            handleFilterChange("role", e.target.value)
+                        }
+                        className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    >
+                        <option value="all">Tất cả vai trò</option>
+                        <option value="admin">Admin</option>
+                        <option value="manager">Manager</option>
+                        <option value="member">Member</option>
+                    </select>
+                    <select
+                        value={filters.department}
+                        onChange={(e) =>
+                            handleFilterChange("department", e.target.value)
+                        }
+                        className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    >
+                        <option value="all">Tất cả phòng ban</option>
+                        {departments.map((dept) => (
+                            <option key={dept._id} value={dept._id}>
+                                {dept.name}
+                            </option>
+                        ))}
+                    </select>
+                    <button
+                        onClick={handleSearch}
+                        className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                        <FunnelIcon className="h-4 w-4 mr-2" />
+                        Lọc
+                    </button>
+                    <button
+                        onClick={handleClearFilters}
+                        className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    >
+                        Xóa bộ lọc
+                    </button>
+                </div>
+            </div>
+
+            {/* Filter Status */}
+            {(searchTerm.trim() ||
+                filters.role !== "all" ||
+                filters.department !== "all") && (
+                <div className="mt-4 flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                    <div className="flex items-center space-x-4">
+                        <span className="text-sm text-gray-600">
+                            Bộ lọc hiện tại:
+                        </span>
+                        {searchTerm.trim() && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                Tìm kiếm: "{searchTerm}"
+                            </span>
+                        )}
+                        {filters.role !== "all" && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Vai trò: {filters.role}
+                            </span>
+                        )}
+                        {filters.department !== "all" && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                Phòng ban:{" "}
+                                {departments.find(
+                                    (d) => d._id === filters.department
+                                )?.name || filters.department}
+                            </span>
+                        )}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                        Tìm thấy {users.length} kết quả
+                    </div>
                 </div>
             )}
 
@@ -423,6 +624,12 @@ export default function Users() {
                                             scope="col"
                                             className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
                                         >
+                                            Projects
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                                        >
                                             Phone
                                         </th>
                                         <th
@@ -460,6 +667,52 @@ export default function Users() {
                                             </td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                                 {user.position}
+                                            </td>
+                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                {user.projectStats ? (
+                                                    <div className="flex flex-col space-y-1">
+                                                        <div className="flex items-center space-x-2">
+                                                            <span className="text-xs font-medium text-gray-600">
+                                                                Tổng:
+                                                            </span>
+                                                            <span className="text-xs font-semibold text-gray-900">
+                                                                {
+                                                                    user
+                                                                        .projectStats
+                                                                        .total
+                                                                }
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center space-x-2">
+                                                            <span className="text-xs font-medium text-green-600">
+                                                                Hoàn thành:
+                                                            </span>
+                                                            <span className="text-xs font-semibold text-green-700">
+                                                                {
+                                                                    user
+                                                                        .projectStats
+                                                                        .completed
+                                                                }
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center space-x-2">
+                                                            <span className="text-xs font-medium text-blue-600">
+                                                                Đang tham gia:
+                                                            </span>
+                                                            <span className="text-xs font-semibold text-blue-700">
+                                                                {
+                                                                    user
+                                                                        .projectStats
+                                                                        .active
+                                                                }
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400">
+                                                        N/A
+                                                    </span>
+                                                )}
                                             </td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                                 {user.phone}

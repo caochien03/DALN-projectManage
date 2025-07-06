@@ -37,12 +37,6 @@ const userSchema = new mongoose.Schema(
             type: String,
             trim: true,
         },
-        projects: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Project",
-            },
-        ],
         tasks: [
             {
                 type: mongoose.Schema.Types.ObjectId,

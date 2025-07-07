@@ -81,7 +81,6 @@ class AuthService {
         const user = await User.findById(userId)
             .select("-password")
             .populate("department", "name")
-            .populate("projects", "name")
             .populate("tasks", "title");
 
         if (!user) {

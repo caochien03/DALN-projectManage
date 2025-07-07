@@ -13,10 +13,10 @@ import NotificationBell from "../components/NotificationBell";
 import { useState, useRef, useEffect } from "react";
 
 const navigation = [
-    { name: "Dashboard", href: "/", icon: HomeIcon },
+    { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
+    { name: "Projects", href: "/", icon: ClipboardDocumentListIcon },
     { name: "Users", href: "/users", icon: UsersIcon },
     { name: "Departments", href: "/departments", icon: BuildingOfficeIcon },
-    { name: "Projects", href: "/projects", icon: ClipboardDocumentListIcon },
     { name: "Profile", href: "/profile", icon: UsersIcon },
     { name: "Notifications", href: "/notifications", icon: BellIcon },
 ];
@@ -153,7 +153,8 @@ export default function MainLayout({ children }) {
                             // Kiểm tra active state cho cả route chính và route con
                             const isActive =
                                 item.href === "/"
-                                    ? location.pathname === "/"
+                                    ? location.pathname === "/" ||
+                                      location.pathname === "/projects"
                                     : location.pathname.startsWith(item.href);
                             return (
                                 <Link
@@ -194,7 +195,8 @@ export default function MainLayout({ children }) {
                             <h2 className="text-lg font-semibold text-gray-900">
                                 {filteredNavigation.find((item) =>
                                     item.href === "/"
-                                        ? location.pathname === "/"
+                                        ? location.pathname === "/" ||
+                                          location.pathname === "/projects"
                                         : location.pathname.startsWith(
                                               item.href
                                           )

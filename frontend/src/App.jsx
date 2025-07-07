@@ -15,7 +15,7 @@ import Projects from "./pages/Projects";
 import Profile from "./pages/Profile";
 import ProjectDetail from "./pages/ProjectDetail";
 import NotificationPage from "./pages/NotificationPage";
-import DashboardMember from "./pages/DashboardMember";
+import Dashboard from "./pages/Dashboard";
 import { NotificationProvider } from "./components/NotificationProvider";
 import ChangePassword from "./pages/ChangePassword";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -139,16 +139,16 @@ export default function App() {
                                 </PrivateRoute>
                             }
                         />
-                        {/* <Route
+                        <Route
                             path="/dashboard"
                             element={
                                 <PrivateRoute>
                                     <MainLayout>
-                                        <DashboardMember />
+                                        <Dashboard />
                                     </MainLayout>
                                 </PrivateRoute>
                             }
-                        /> */}
+                        />
                         <Route
                             path="/reset-password"
                             element={<ResetPassword />}

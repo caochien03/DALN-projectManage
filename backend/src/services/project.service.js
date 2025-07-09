@@ -10,10 +10,30 @@ class ProjectService {
         return project;
     }
 
-    static async getAllProjects() {
-        return Project.find()
+    static async getAllProjects(filters = {}) {
+        const { search, department } = filters;
+
+        let query = Project.find();
+
+        // Search filter
+        if (search) {
+            query = query.find({
+                $or: [
+                    { name: { $regex: search, $options: "i" } },
+                    { description: { $regex: search, $options: "i" } },
+                ],
+            });
+        }
+
+        // Department filter
+        if (department) {
+            query = query.find({ departments: department });
+        }
+
+        return query
             .populate("createdBy", "name email")
-            .populate("members.user", "name email position");
+            .populate("members.user", "name email position")
+            .populate("departments", "name");
     }
 
     static async getProjectById(id) {

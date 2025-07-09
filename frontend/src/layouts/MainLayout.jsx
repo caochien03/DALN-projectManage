@@ -150,12 +150,17 @@ export default function MainLayout({ children }) {
                     {/* Navigation */}
                     <nav className="flex-1 px-4 py-4 space-y-1">
                         {filteredNavigation.map((item) => {
-                            // Kiểm tra active state cho cả route chính và route con
-                            const isActive =
-                                item.href === "/"
-                                    ? location.pathname === "/" ||
-                                      location.pathname === "/projects"
-                                    : location.pathname.startsWith(item.href);
+                            let isActive = false;
+                            if (item.href === "/projects") {
+                                isActive =
+                                    location.pathname.startsWith("/projects");
+                            } else if (item.href === "/") {
+                                isActive = location.pathname === "/";
+                            } else {
+                                isActive = location.pathname.startsWith(
+                                    item.href
+                                );
+                            }
                             return (
                                 <Link
                                     key={item.name}

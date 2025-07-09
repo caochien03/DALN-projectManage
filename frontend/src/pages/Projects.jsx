@@ -14,6 +14,7 @@ import { getAllUsers } from "../services/user";
 import Modal from "../components/Modal";
 import Loading from "../components/Loading";
 import PopConfirmFloating from "../components/PopConfirmFloating";
+import ProjectSearchFilter from "../components/ProjectSearchFilter";
 
 const statuses = ["open", "close"];
 
@@ -42,6 +43,14 @@ export default function Projects() {
     const [showInfoModal, setShowInfoModal] = useState(false);
     const [selectedProject, setSelectedProject] = useState(null);
     const [registering, setRegistering] = useState(false);
+
+    // Main filter state (used for fetching)
+    const [searchTerm, setSearchTerm] = useState("");
+    const [selectedDepartment, setSelectedDepartment] = useState("");
+    // Pending filter state (used for input fields)
+    const [pendingSearchTerm, setPendingSearchTerm] = useState("");
+    const [pendingDepartment, setPendingDepartment] = useState("");
+
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -50,10 +59,14 @@ export default function Projects() {
         fetchUsers();
     }, []);
 
+    // Fetch projects with filters
     const fetchProjects = async () => {
         setIsLoading(true);
         try {
-            const data = await getAllProjects();
+            const filters = {};
+            if (searchTerm) filters.search = searchTerm;
+            if (selectedDepartment) filters.department = selectedDepartment;
+            const data = await getAllProjects(filters);
             setProjects(data);
         } catch {
             setError("Failed to fetch projects");
@@ -61,6 +74,11 @@ export default function Projects() {
             setIsLoading(false);
         }
     };
+
+    // Only fetch when filter state changes (not on every input)
+    useEffect(() => {
+        fetchProjects();
+    }, [searchTerm, selectedDepartment]);
 
     const fetchDepartments = async () => {
         try {
@@ -78,6 +96,28 @@ export default function Projects() {
         } catch {
             setError("Failed to fetch users");
         }
+    };
+
+    // Handle input changes (update pending state)
+    const handlePendingSearchChange = (value) => {
+        setPendingSearchTerm(value);
+    };
+    const handlePendingDepartmentChange = (value) => {
+        setPendingDepartment(value);
+    };
+
+    // Apply filter (update main state)
+    const handleApplyFilter = () => {
+        setSearchTerm(pendingSearchTerm);
+        setSelectedDepartment(pendingDepartment);
+    };
+
+    // Clear all filters
+    const clearFilters = () => {
+        setPendingSearchTerm("");
+        setPendingDepartment("");
+        setSearchTerm("");
+        setSelectedDepartment("");
     };
 
     const handleSubmit = async (e) => {
@@ -546,6 +586,15 @@ export default function Projects() {
 
             {/* Kanban Board */}
             <div className="mt-8">
+                <ProjectSearchFilter
+                    searchTerm={pendingSearchTerm}
+                    onSearchChange={handlePendingSearchChange}
+                    selectedDepartment={pendingDepartment}
+                    onDepartmentChange={handlePendingDepartmentChange}
+                    departments={departments}
+                    onClearFilters={clearFilters}
+                    onFilter={handleApplyFilter}
+                />
                 <div className="grid grid-cols-4 gap-4">
                     {statuses.map((status) => (
                         <div key={status} className="bg-gray-50 rounded-lg p-4">
@@ -596,7 +645,30 @@ export default function Projects() {
                                             <p className="text-sm text-gray-500 mt-1">
                                                 {project.description}
                                             </p>
-                                            <p className="text-sm text-blue-600 mt-1">
+                                            {/* Progress Bar */}
+                                            <div className="mt-3">
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="text-sm font-medium text-gray-700">
+                                                        Tiến độ
+                                                    </span>
+                                                    <span className="text-sm text-gray-500">
+                                                        {project.progress || 0}%
+                                                    </span>
+                                                </div>
+                                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                                    <div
+                                                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                                        style={{
+                                                            width: `${
+                                                                project.progress ||
+                                                                0
+                                                            }%`,
+                                                        }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+
+                                            <p className="text-sm text-blue-600 mt-2">
                                                 <strong>
                                                     Kết thúc dự kiến:
                                                 </strong>{" "}

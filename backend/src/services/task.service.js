@@ -40,15 +40,13 @@ class TaskService {
     static async getAllTasks() {
         return Task.find()
             .populate("project", "name")
-            .populate("assignedTo", "name email")
-            .populate("comments.user", "name email");
+            .populate("assignedTo", "name email");
     }
 
     static async getTaskById(id) {
         return Task.findById(id)
             .populate("project", "name")
-            .populate("assignedTo", "name email")
-            .populate("comments.user", "name email");
+            .populate("assignedTo", "name email");
     }
 
     static async updateTask(id, updates) {
@@ -160,8 +158,7 @@ class TaskService {
     static async getTasksByProject(projectId) {
         return Task.find({ project: projectId })
             .populate("project", "name")
-            .populate("assignedTo", "name email")
-            .populate("comments.user", "name email");
+            .populate("assignedTo", "name email");
     }
 
     static async deleteTask(id) {

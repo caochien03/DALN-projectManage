@@ -1,8 +1,17 @@
 import axiosInstance from "../utils/axios";
 
 // Get all projects
-export const getAllProjects = async () => {
-    const response = await axiosInstance.get("/api/projects");
+export const getAllProjects = async (filters = {}) => {
+    const params = new URLSearchParams();
+
+    if (filters.search) {
+        params.append("search", filters.search);
+    }
+    if (filters.department) {
+        params.append("department", filters.department);
+    }
+
+    const response = await axiosInstance.get(`/api/projects?${params}`);
     return response.data.data;
 };
 

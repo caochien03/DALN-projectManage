@@ -2,6 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login, forgotPassword } from "../services/auth";
 import { toast } from "react-toastify";
+import {
+    EyeIcon,
+    EyeSlashIcon,
+    LockClosedIcon,
+    EnvelopeIcon,
+} from "@heroicons/react/24/outline";
 
 export default function Login() {
     const navigate = useNavigate();
@@ -10,6 +16,7 @@ export default function Login() {
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [showForgotPassword, setShowForgotPassword] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -60,100 +67,111 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md w-full space-y-8">
-                <div>
-                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-blue-50 to-white py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 space-y-8">
+                <div className="flex flex-col items-center">
+                    <div className="bg-indigo-600 rounded-full p-3 mb-2">
+                        <LockClosedIcon className="h-8 w-8 text-white" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-1 tracking-tight">
                         {showForgotPassword
-                            ? "Reset your password"
-                            : "Sign in to your account"}
+                            ? "Quên mật khẩu"
+                            : "Đăng nhập hệ thống"}
                     </h2>
+                    <p className="text-gray-500 text-sm">
+                        Quản lý dự án nội bộ
+                    </p>
                 </div>
 
                 {error && (
-                    <div
-                        className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-                        role="alert"
-                    >
-                        <span className="block sm:inline">{error}</span>
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded mb-2 text-center text-sm">
+                        {error}
                     </div>
                 )}
 
                 <form
-                    className="mt-8 space-y-6"
+                    className="space-y-6"
                     onSubmit={
                         showForgotPassword ? handleForgotPassword : handleLogin
                     }
                 >
-                    <div className="rounded-md shadow-sm -space-y-px">
-                        <div>
-                            <label htmlFor="email-address" className="sr-only">
-                                Email address
-                            </label>
+                    <div className="space-y-4">
+                        <div className="relative">
+                            <EnvelopeIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                             <input
                                 id="email-address"
                                 name="email"
                                 type="email"
                                 autoComplete="email"
                                 required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                placeholder="Email address"
+                                className="pl-10 pr-3 py-2 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 text-gray-900 placeholder-gray-400 shadow-sm"
+                                placeholder="Email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
                         </div>
                         {!showForgotPassword && (
-                            <div>
-                                <label htmlFor="password" className="sr-only">
-                                    Password
-                                </label>
+                            <div className="relative">
+                                <LockClosedIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                                 <input
                                     id="password"
                                     name="password"
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     autoComplete="current-password"
                                     required
-                                    className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                    placeholder="Password"
+                                    className="pl-10 pr-10 py-2 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 text-gray-900 placeholder-gray-400 shadow-sm"
+                                    placeholder="Mật khẩu"
                                     value={password}
                                     onChange={(e) =>
                                         setPassword(e.target.value)
                                     }
                                 />
+                                <button
+                                    type="button"
+                                    tabIndex={-1}
+                                    className="absolute right-3 top-2.5 text-gray-400 hover:text-indigo-600"
+                                    onClick={() => setShowPassword((v) => !v)}
+                                >
+                                    {showPassword ? (
+                                        <EyeSlashIcon className="h-5 w-5" />
+                                    ) : (
+                                        <EyeIcon className="h-5 w-5" />
+                                    )}
+                                </button>
                             </div>
                         )}
                     </div>
 
                     <div className="flex items-center justify-between">
-                        <div className="text-sm">
-                            <button
-                                type="button"
-                                className="font-medium text-indigo-600 hover:text-indigo-500"
-                                onClick={() =>
-                                    setShowForgotPassword(!showForgotPassword)
-                                }
-                            >
-                                {showForgotPassword
-                                    ? "Back to login"
-                                    : "Forgot your password?"}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
                         <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            type="button"
+                            className="text-sm text-indigo-600 hover:underline focus:outline-none"
+                            onClick={() =>
+                                setShowForgotPassword(!showForgotPassword)
+                            }
                         >
-                            {isLoading
-                                ? "Processing..."
-                                : showForgotPassword
-                                ? "Reset Password"
-                                : "Sign in"}
+                            {showForgotPassword
+                                ? "Quay lại đăng nhập"
+                                : "Quên mật khẩu?"}
                         </button>
                     </div>
+
+                    <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-semibold rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 shadow-md transition"
+                    >
+                        {isLoading
+                            ? "Đang xử lý..."
+                            : showForgotPassword
+                            ? "Gửi hướng dẫn"
+                            : "Đăng nhập"}
+                    </button>
                 </form>
+
+                <div className="text-xs text-gray-400 text-center pt-2">
+                    © {new Date().getFullYear()} Project Management System
+                </div>
             </div>
         </div>
     );

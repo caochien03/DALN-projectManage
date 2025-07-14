@@ -4,25 +4,11 @@ const notificationService = require("./notification.service");
 
 class NotificationScheduler {
     static init() {
-        // Chạy mỗi 5 phút để test (có thể thay đổi sau)
-        cron.schedule("*/5 * * * *", async () => {
-            console.log(
-                "🔔 Running notification scheduler (every 5 minutes)..."
-            );
+        // Chạy tất cả các kiểm tra vào 8h sáng mỗi ngày
+        cron.schedule("0 8 * * *", async () => {
+            console.log("🔔 Running all notification checks at 8AM...");
             await this.checkDueTasks();
-            await this.checkOverdueTasks();
             await this.checkProjectDue();
-        });
-
-        // Chạy mỗi giờ để kiểm tra task sắp đến hạn
-        cron.schedule("0 * * * *", async () => {
-            console.log("🔔 Running notification scheduler (hourly)...");
-            await this.checkDueTasks();
-        });
-
-        // Chạy mỗi ngày lúc 9h sáng để kiểm tra task quá hạn
-        cron.schedule("0 9 * * *", async () => {
-            console.log("🔔 Running overdue task checker...");
             await this.checkOverdueTasks();
         });
 

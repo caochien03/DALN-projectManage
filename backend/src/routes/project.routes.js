@@ -119,4 +119,7 @@ router.delete(
     ProjectController.deleteMilestone
 );
 
+// Get project activity log
+router.get("/:id/activity", auth, ProjectController.getProjectActivity);
+
 module.exports = router;

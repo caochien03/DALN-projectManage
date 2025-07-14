@@ -14,6 +14,7 @@ import {
     createMilestone,
     updateMilestone,
     deleteMilestone,
+    getProjectActivity,
 } from "../services/project";
 import Modal from "../components/Modal";
 import TaskBoard from "../components/TaskBoard";
@@ -28,6 +29,7 @@ import {
     CheckCircleIcon,
     ExclamationCircleIcon,
 } from "@heroicons/react/24/outline";
+import TaskCalendar from "../components/TaskCalendar";
 
 export default function ProjectDetail() {
     const { id } = useParams();
@@ -60,6 +62,11 @@ export default function ProjectDetail() {
         dueDate: "",
     });
     const [editingMilestone, setEditingMilestone] = useState(null);
+    const [taskView, setTaskView] = useState("kanban");
+    const [activityLog, setActivityLog] = useState([]);
+    const [activityLoading, setActivityLoading] = useState(false);
+    const [activityError, setActivityError] = useState("");
+    const [tab, setTab] = useState("info"); // info | activity
 
     useEffect(() => {
         fetchData();
@@ -387,6 +394,29 @@ export default function ProjectDetail() {
         }
     };
 
+    const isAdminOrManager =
+        currentUser?.role === "admin" || currentUser?.role === "manager";
+
+    const fetchActivityLog = async () => {
+        setActivityLoading(true);
+        setActivityError("");
+        try {
+            const data = await getProjectActivity(id);
+            setActivityLog(data);
+        } catch {
+            setActivityError("Không thể tải lịch sử thay đổi");
+        } finally {
+            setActivityLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (tab === "activity" && isAdminOrManager) {
+            fetchActivityLog();
+        }
+        // eslint-disable-next-line
+    }, [tab, id]);
+
     if (loading) {
         return <Loading />;
     }
@@ -523,253 +553,378 @@ export default function ProjectDetail() {
                 </div>
             </div>
 
-            {/* Main content grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left: Info, milestones, tasks, documents */}
-                <div className="lg:col-span-2 flex flex-col gap-8">
-                    {/* Thông tin dự án */}
-                    <div className="bg-white rounded-xl shadow p-6">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                            Thông tin dự án
-                        </h2>
-                        <p className="text-gray-700 mb-2">
-                            {project.description}
-                        </p>
-                        <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                            <span>
-                                Phòng ban:{" "}
-                                {project.departments
-                                    ?.map(getDepartmentName)
-                                    .join(", ")}
-                            </span>
-                            <span>
-                                Trạng thái: {statusBadge(project.status)}
-                            </span>
+            {/* Tab selector */}
+            <div className="flex gap-2 mb-6">
+                <button
+                    className={`px-4 py-2 rounded font-semibold ${
+                        tab === "info"
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-200"
+                    }`}
+                    onClick={() => setTab("info")}
+                >
+                    Thông tin dự án
+                </button>
+                {isAdminOrManager && (
+                    <button
+                        className={`px-4 py-2 rounded font-semibold ${
+                            tab === "activity"
+                                ? "bg-blue-600 text-white"
+                                : "bg-gray-200"
+                        }`}
+                        onClick={() => setTab("activity")}
+                    >
+                        Lịch sử thay đổi
+                    </button>
+                )}
+            </div>
+            {tab === "info" ? (
+                // Main content grid
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Left: Info, milestones, tasks, documents */}
+                    <div className="lg:col-span-2 flex flex-col gap-8">
+                        {/* Thông tin dự án */}
+                        <div className="bg-white rounded-xl shadow p-6">
+                            <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                                Thông tin dự án
+                            </h2>
+                            <p className="text-gray-700 mb-2">
+                                {project.description}
+                            </p>
+                            <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                                <span>
+                                    Phòng ban:{" "}
+                                    {project.departments
+                                        ?.map(getDepartmentName)
+                                        .join(", ")}
+                                </span>
+                                <span>
+                                    Trạng thái: {statusBadge(project.status)}
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                    {/* Milestones */}
-                    <div className="bg-white rounded-xl shadow p-6">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                            <CheckCircleIcon className="h-5 w-5 text-green-500" />{" "}
-                            Milestones
-                        </h2>
-                        <ul className="space-y-3">
-                            {project.milestones?.length > 0 ? (
-                                project.milestones
-                                    .filter((m) => m && m._id)
-                                    .map((m, idx) => (
-                                        <li
-                                            key={m._id || idx}
-                                            className="bg-gray-50 rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2 border border-gray-100"
-                                        >
-                                            <div className="flex-1">
-                                                <div className="font-medium text-gray-900 flex items-center gap-2">
-                                                    {m.name}
-                                                    {m.status === "pending" && (
-                                                        <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs">
-                                                            Chờ hoàn thành
-                                                        </span>
-                                                    )}
-                                                    {m.status ===
-                                                        "completed" && (
-                                                        <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">
-                                                            Đã hoàn thành
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="text-sm text-gray-500 mt-1">
-                                                    Hạn:{" "}
-                                                    {m.dueDate?.slice(0, 10)}
-                                                </div>
-                                                {m.completedAt && (
-                                                    <div className="text-xs text-gray-400">
-                                                        Hoàn thành:{" "}
-                                                        {new Date(
-                                                            m.completedAt
-                                                        ).toLocaleDateString()}
+                        {/* Milestones */}
+                        <div className="bg-white rounded-xl shadow p-6">
+                            <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                <CheckCircleIcon className="h-5 w-5 text-green-500" />{" "}
+                                Milestones
+                            </h2>
+                            <ul className="space-y-3">
+                                {project.milestones?.length > 0 ? (
+                                    project.milestones
+                                        .filter((m) => m && m._id)
+                                        .map((m, idx) => (
+                                            <li
+                                                key={m._id || idx}
+                                                className="bg-gray-50 rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2 border border-gray-100"
+                                            >
+                                                <div className="flex-1">
+                                                    <div className="font-medium text-gray-900 flex items-center gap-2">
+                                                        {m.name}
+                                                        {m.status ===
+                                                            "pending" && (
+                                                            <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-xs">
+                                                                Chờ hoàn thành
+                                                            </span>
+                                                        )}
+                                                        {m.status ===
+                                                            "completed" && (
+                                                            <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">
+                                                                Đã hoàn thành
+                                                            </span>
+                                                        )}
                                                     </div>
-                                                )}
-                                            </div>
-                                            <div className="flex gap-2 mt-2 md:mt-0">
-                                                {m.status === "pending" && (
-                                                    <PopConfirmFloating
-                                                        title="Xác nhận hoàn thành milestone này?"
-                                                        onConfirm={() =>
-                                                            handleCompleteMilestone(
-                                                                m._id
-                                                            )
-                                                        }
-                                                        okText="Xác nhận"
-                                                    >
-                                                        <button className="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
-                                                            Hoàn thành
-                                                        </button>
-                                                    </PopConfirmFloating>
-                                                )}
-                                                {m.status === "completed" && (
-                                                    <button
-                                                        onClick={() =>
-                                                            handleCheckMilestoneConsistency(
-                                                                m._id
-                                                            )
-                                                        }
-                                                        className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
-                                                    >
-                                                        Kiểm tra
-                                                    </button>
-                                                )}
-                                                {(currentUser.role ===
-                                                    "admin" ||
-                                                    currentUser.role ===
-                                                        "manager") && (
-                                                    <>
-                                                        <button
-                                                            onClick={() =>
-                                                                openEditMilestone(
-                                                                    m
-                                                                )
-                                                            }
-                                                            className="text-sm bg-yellow-600 text-white px-3 py-1 rounded hover:bg-yellow-700"
-                                                        >
-                                                            Sửa
-                                                        </button>
+                                                    <div className="text-sm text-gray-500 mt-1">
+                                                        Hạn:{" "}
+                                                        {m.dueDate?.slice(
+                                                            0,
+                                                            10
+                                                        )}
+                                                    </div>
+                                                    {m.completedAt && (
+                                                        <div className="text-xs text-gray-400">
+                                                            Hoàn thành:{" "}
+                                                            {new Date(
+                                                                m.completedAt
+                                                            ).toLocaleDateString()}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex gap-2 mt-2 md:mt-0">
+                                                    {m.status === "pending" && (
                                                         <PopConfirmFloating
-                                                            title="Bạn có chắc chắn muốn xóa milestone này?"
+                                                            title="Xác nhận hoàn thành milestone này?"
                                                             onConfirm={() =>
-                                                                handleDeleteMilestone(
+                                                                handleCompleteMilestone(
                                                                     m._id
                                                                 )
                                                             }
+                                                            okText="Xác nhận"
                                                         >
-                                                            <button className="text-sm bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">
-                                                                Xóa
+                                                            <button className="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
+                                                                Hoàn thành
                                                             </button>
                                                         </PopConfirmFloating>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </li>
-                                    ))
-                            ) : (
-                                <li className="text-gray-500">
-                                    Chưa có milestone nào
-                                </li>
-                            )}
-                        </ul>
-                        {milestoneError && (
-                            <div className="text-red-500 text-sm mt-2">
-                                {milestoneError}
-                            </div>
-                        )}
-                    </div>
-                    {/* Tasks */}
-                    <div className="bg-white rounded-xl shadow p-6">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                            Tasks
-                        </h2>
-                        <TaskBoard
-                            tasks={tasks}
-                            onTaskUpdate={handleTaskUpdate}
-                            onTaskEdit={openEditTask}
-                            onTaskDelete={handleDeleteTask}
-                            getUserName={getUserName}
-                            onTaskStatusChangeOptimistic={
-                                handleTaskStatusChangeOptimistic
-                            }
-                            canEditTask={canEditTask}
-                            canDeleteTask={canDeleteTask}
-                        />
-                    </div>
-                    {/* Documents - moved here */}
-                    <div className="bg-white rounded-xl shadow p-6">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                            <ExclamationCircleIcon className="h-5 w-5 text-blue-500" />{" "}
-                            Tài liệu
-                        </h2>
-                        <DocumentManager
-                            projectId={id}
-                            canEdit={canUploadDocument}
-                            canDelete={canDeleteDocument}
-                        />
-                    </div>
-                </div>
-                {/* Right: Members, Comments */}
-                <div className="flex flex-col gap-8">
-                    {/* Members */}
-                    <div className="bg-white rounded-xl shadow p-6">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                            <UserIcon className="h-5 w-5 text-indigo-500" />{" "}
-                            Thành viên
-                        </h2>
-                        <div>{memberAvatars}</div>
-                        {(currentUser.role === "admin" ||
-                            currentUser.role === "manager") &&
-                            project.pendingMembers?.length > 0 && (
-                                <div className="mt-4">
-                                    <h3 className="font-semibold text-sm mb-2">
-                                        Thành viên chờ duyệt:
-                                    </h3>
-                                    <ul>
-                                        {project.pendingMembers
-                                            ?.filter((userId) => userId)
-                                            .map((userId) => {
-                                                const user = users.find(
-                                                    (u) => u._id === userId
-                                                );
-                                                return (
-                                                    <li
-                                                        key={userId}
-                                                        className="flex items-center gap-2 mb-1"
-                                                    >
-                                                        {user?.name || userId}
-                                                        <PopConfirmFloating
-                                                            title="Duyệt thành viên này?"
-                                                            onConfirm={() =>
-                                                                handleApprove(
-                                                                    userId
+                                                    )}
+                                                    {m.status ===
+                                                        "completed" && (
+                                                        <button
+                                                            onClick={() =>
+                                                                handleCheckMilestoneConsistency(
+                                                                    m._id
                                                                 )
                                                             }
-                                                            okText="Duyệt"
+                                                            className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
                                                         >
-                                                            <button className="bg-green-600 text-white px-2 py-1 rounded text-xs">
-                                                                Duyệt
+                                                            Kiểm tra
+                                                        </button>
+                                                    )}
+                                                    {(currentUser.role ===
+                                                        "admin" ||
+                                                        currentUser.role ===
+                                                            "manager") && (
+                                                        <>
+                                                            <button
+                                                                onClick={() =>
+                                                                    openEditMilestone(
+                                                                        m
+                                                                    )
+                                                                }
+                                                                className="text-sm bg-yellow-600 text-white px-3 py-1 rounded hover:bg-yellow-700"
+                                                            >
+                                                                Sửa
                                                             </button>
-                                                        </PopConfirmFloating>
-                                                        <PopConfirmFloating
-                                                            title="Từ chối thành viên này?"
-                                                            onConfirm={() =>
-                                                                handleReject(
-                                                                    userId
-                                                                )
-                                                            }
-                                                            okText="Từ chối"
-                                                        >
-                                                            <button className="bg-red-600 text-white px-2 py-1 rounded text-xs">
-                                                                Từ chối
-                                                            </button>
-                                                        </PopConfirmFloating>
-                                                    </li>
-                                                );
-                                            })}
-                                    </ul>
+                                                            <PopConfirmFloating
+                                                                title="Bạn có chắc chắn muốn xóa milestone này?"
+                                                                onConfirm={() =>
+                                                                    handleDeleteMilestone(
+                                                                        m._id
+                                                                    )
+                                                                }
+                                                            >
+                                                                <button className="text-sm bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">
+                                                                    Xóa
+                                                                </button>
+                                                            </PopConfirmFloating>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </li>
+                                        ))
+                                ) : (
+                                    <li className="text-gray-500">
+                                        Chưa có milestone nào
+                                    </li>
+                                )}
+                            </ul>
+                            {milestoneError && (
+                                <div className="text-red-500 text-sm mt-2">
+                                    {milestoneError}
                                 </div>
                             )}
+                        </div>
+                        {/* Tasks + Calendar View */}
+                        <div className="bg-white rounded-xl shadow p-6">
+                            <div className="flex gap-2 mb-4">
+                                <button
+                                    className={`px-4 py-2 rounded ${
+                                        taskView === "kanban"
+                                            ? "bg-blue-600 text-white"
+                                            : "bg-gray-200"
+                                    }`}
+                                    onClick={() => setTaskView("kanban")}
+                                >
+                                    Kanban
+                                </button>
+                                <button
+                                    className={`px-4 py-2 rounded ${
+                                        taskView === "calendar"
+                                            ? "bg-blue-600 text-white"
+                                            : "bg-gray-200"
+                                    }`}
+                                    onClick={() => setTaskView("calendar")}
+                                >
+                                    Calendar
+                                </button>
+                            </div>
+                            {taskView === "kanban" ? (
+                                <TaskBoard
+                                    tasks={tasks}
+                                    onTaskUpdate={handleTaskUpdate}
+                                    onTaskEdit={openEditTask}
+                                    onTaskDelete={handleDeleteTask}
+                                    getUserName={getUserName}
+                                    onTaskStatusChangeOptimistic={
+                                        handleTaskStatusChangeOptimistic
+                                    }
+                                    canEditTask={canEditTask}
+                                    canDeleteTask={canDeleteTask}
+                                />
+                            ) : (
+                                <TaskCalendar
+                                    tasks={tasks}
+                                    onTaskClick={openEditTask}
+                                />
+                            )}
+                        </div>
+                        {/* Documents - moved here */}
+                        <div className="bg-white rounded-xl shadow p-6">
+                            <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                <ExclamationCircleIcon className="h-5 w-5 text-blue-500" />{" "}
+                                Tài liệu
+                            </h2>
+                            <DocumentManager
+                                projectId={id}
+                                canEdit={canUploadDocument}
+                                canDelete={canDeleteDocument}
+                            />
+                        </div>
                     </div>
-                    {/* Comments */}
-                    <div className="bg-white rounded-xl shadow p-6">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                            <ExclamationCircleIcon className="h-5 w-5 text-gray-500" />{" "}
-                            Bình luận
-                        </h2>
-                        <CommentBox
-                            type="project"
-                            id={id}
-                            members={projectMembers}
-                            currentUser={currentUser}
-                        />
+                    {/* Right: Members, Comments */}
+                    <div className="flex flex-col gap-8">
+                        {/* Members */}
+                        <div className="bg-white rounded-xl shadow p-6">
+                            <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                <UserIcon className="h-5 w-5 text-indigo-500" />{" "}
+                                Thành viên
+                            </h2>
+                            <div>{memberAvatars}</div>
+                            {(currentUser.role === "admin" ||
+                                currentUser.role === "manager") &&
+                                project.pendingMembers?.length > 0 && (
+                                    <div className="mt-4">
+                                        <h3 className="font-semibold text-sm mb-2">
+                                            Thành viên chờ duyệt:
+                                        </h3>
+                                        <ul>
+                                            {project.pendingMembers
+                                                ?.filter((userId) => userId)
+                                                .map((userId) => {
+                                                    const user = users.find(
+                                                        (u) => u._id === userId
+                                                    );
+                                                    return (
+                                                        <li
+                                                            key={userId}
+                                                            className="flex items-center gap-2 mb-1"
+                                                        >
+                                                            {user?.name ||
+                                                                userId}
+                                                            <PopConfirmFloating
+                                                                title="Duyệt thành viên này?"
+                                                                onConfirm={() =>
+                                                                    handleApprove(
+                                                                        userId
+                                                                    )
+                                                                }
+                                                                okText="Duyệt"
+                                                            >
+                                                                <button className="bg-green-600 text-white px-2 py-1 rounded text-xs">
+                                                                    Duyệt
+                                                                </button>
+                                                            </PopConfirmFloating>
+                                                            <PopConfirmFloating
+                                                                title="Từ chối thành viên này?"
+                                                                onConfirm={() =>
+                                                                    handleReject(
+                                                                        userId
+                                                                    )
+                                                                }
+                                                                okText="Từ chối"
+                                                            >
+                                                                <button className="bg-red-600 text-white px-2 py-1 rounded text-xs">
+                                                                    Từ chối
+                                                                </button>
+                                                            </PopConfirmFloating>
+                                                        </li>
+                                                    );
+                                                })}
+                                        </ul>
+                                    </div>
+                                )}
+                        </div>
+                        {/* Comments */}
+                        <div className="bg-white rounded-xl shadow p-6">
+                            <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                <ExclamationCircleIcon className="h-5 w-5 text-gray-500" />{" "}
+                                Bình luận
+                            </h2>
+                            <CommentBox
+                                type="project"
+                                id={id}
+                                members={projectMembers}
+                                currentUser={currentUser}
+                            />
+                        </div>
                     </div>
                 </div>
-            </div>
+            ) : (
+                <div className="bg-white rounded-xl shadow p-6">
+                    <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                        Lịch sử thay đổi dự án
+                    </h2>
+                    {activityLoading ? (
+                        <div>Đang tải...</div>
+                    ) : activityError ? (
+                        <div className="text-red-500">{activityError}</div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full text-sm">
+                                <thead>
+                                    <tr className="bg-gray-100">
+                                        <th className="px-4 py-2 text-left">
+                                            Thời gian
+                                        </th>
+                                        <th className="px-4 py-2 text-left">
+                                            Người thực hiện
+                                        </th>
+                                        <th className="px-4 py-2 text-left">
+                                            Hành động
+                                        </th>
+                                        <th className="px-4 py-2 text-left">
+                                            Chi tiết
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {activityLog.length === 0 ? (
+                                        <tr>
+                                            <td
+                                                colSpan={4}
+                                                className="text-center py-4 text-gray-500"
+                                            >
+                                                Chưa có lịch sử thay đổi
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        activityLog.map((log) => (
+                                            <tr
+                                                key={log._id}
+                                                className="border-b"
+                                            >
+                                                <td className="px-4 py-2 whitespace-nowrap">
+                                                    {new Date(
+                                                        log.createdAt
+                                                    ).toLocaleString("vi-VN")}
+                                                </td>
+                                                <td className="px-4 py-2 whitespace-nowrap">
+                                                    {log.user?.name || "[N/A]"}
+                                                </td>
+                                                <td className="px-4 py-2 whitespace-nowrap">
+                                                    {log.action}
+                                                </td>
+                                                <td className="px-4 py-2">
+                                                    {log.detail}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Modals giữ nguyên như cũ */}
             <Modal

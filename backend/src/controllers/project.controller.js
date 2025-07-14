@@ -4,6 +4,7 @@ const Project = require("../models/Project");
 const Task = require("../models/Task");
 const Document = require("../models/Document");
 const Comment = require("../models/Comment");
+const { getProjectActivities } = require("../services/projectActivity.service");
 
 class ProjectController {
     static async createProject(req, res) {
@@ -328,6 +329,24 @@ class ProjectController {
             });
         } catch (error) {
             res.status(400).json({ success: false, message: error.message });
+        }
+    }
+
+    static async getProjectActivity(req, res) {
+        try {
+            const projectId = req.params.id;
+            // Chỉ cho phép admin/manager
+            if (req.user.role !== "admin" && req.user.role !== "manager") {
+                return res.status(403).json({
+                    success: false,
+                    message:
+                        "Bạn không có quyền xem lịch sử thay đổi dự án này",
+                });
+            }
+            const activities = await getProjectActivities(projectId);
+            res.json({ success: true, data: activities });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 }

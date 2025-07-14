@@ -189,18 +189,30 @@ export default function Projects() {
         formData.departments.includes(user.department?._id || user.department)
     );
 
-    // Tự động loại bỏ member không còn thuộc department đã chọn
+    // Lọc manager theo department đã chọn
+    const filteredManagers = users.filter(
+        (user) =>
+            user.role === "manager" &&
+            formData.departments.includes(
+                user.department?._id || user.department
+            )
+    );
+
+    // Tự động loại bỏ member và manager không còn thuộc department đã chọn
     useEffect(() => {
         setFormData((prev) => ({
             ...prev,
             members: prev.members.filter((m) =>
                 filteredUsers.some((u) => u._id === m.user)
             ),
+            manager: filteredManagers.some((m) => m._id === prev.manager)
+                ? prev.manager
+                : "",
         }));
         // eslint-disable-next-line
     }, [formData.departments]);
 
-    // Lọc project theo department của user
+    // Lọc project theo department của user (admin thấy tất cả, manager/member chỉ thấy trong department của mình)
     const filteredProjects =
         currentUser.role === "admin"
             ? projects
@@ -218,15 +230,17 @@ export default function Projects() {
         currentUser.role === "admin" || currentUser.role === "manager";
 
     const handleProjectClick = (project) => {
-        if (currentUser.role === "admin" || currentUser.role === "manager") {
+        if (currentUser.role === "admin") {
             navigate(`/projects/${project._id}`);
             return;
         }
-        const isMember = project.members?.some(
-            (m) => (m.user?._id || m.user) === currentUser._id
-        );
-        const isPending = project.pendingMembers?.includes(currentUser._id);
-        if (isMember || isPending) {
+
+        const projectType = getProjectType(project);
+        if (
+            projectType === "manager" ||
+            projectType === "member" ||
+            projectType === "pending"
+        ) {
             navigate(`/projects/${project._id}`);
         } else {
             setSelectedProject(project);
@@ -255,6 +269,11 @@ export default function Projects() {
             (m) => (m.user?._id || m.user) === currentUser._id
         );
         const isPending = project.pendingMembers?.includes(currentUser._id);
+        const isManager =
+            project.manager?._id === currentUser._id ||
+            project.manager === currentUser._id;
+
+        if (isManager) return "manager";
         if (isMember) return "member";
         if (isPending) return "pending";
         return "not-registered";
@@ -553,7 +572,7 @@ export default function Projects() {
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         >
                             <option value="">Select Manager</option>
-                            {users.map((user) => (
+                            {filteredManagers.map((user) => (
                                 <option key={user._id} value={user._id}>
                                     {user.name} ({user.position})
                                 </option>
@@ -614,9 +633,18 @@ export default function Projects() {
                                         >
                                             <h4 className="font-medium text-gray-900 flex items-center gap-2">
                                                 {project.name}
-                                                {currentUser.role ===
-                                                    "member" && (
+                                                {(currentUser.role ===
+                                                    "member" ||
+                                                    currentUser.role ===
+                                                        "manager") && (
                                                     <>
+                                                        {getProjectType(
+                                                            project
+                                                        ) === "manager" && (
+                                                            <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
+                                                                Quản lý
+                                                            </span>
+                                                        )}
                                                         {getProjectType(
                                                             project
                                                         ) === "member" && (

@@ -1,5 +1,6 @@
 const documentService = require("../services/document.service");
 const path = require("path");
+const { logActivity } = require("../services/projectActivity.service");
 
 exports.uploadDocument = async (req, res) => {
     try {
@@ -22,6 +23,15 @@ exports.uploadDocument = async (req, res) => {
             });
         }
         const result = await documentService.uploadDocument(req, res);
+        // Ghi log activity
+        await logActivity({
+            project: project._id,
+            user: req.user._id,
+            action: "upload_document",
+            detail: `Upload tài liệu "${
+                result.name || result.fileName || "file"
+            }"`,
+        });
         res.status(201).json({
             success: true,
             message: "Upload tài liệu thành công!",
@@ -84,7 +94,20 @@ exports.getDocumentVersions = async (req, res) => {
 exports.deleteDocument = async (req, res) => {
     try {
         const docId = req.params.docId;
+        const doc = await documentService.getDocumentById(docId);
+        if (!doc) {
+            return res
+                .status(404)
+                .json({ success: false, message: "Document not found" });
+        }
         await documentService.deleteDocument(docId);
+        // Ghi log activity
+        await logActivity({
+            project: doc.project,
+            user: req.user._id,
+            action: "delete_document",
+            detail: `Xóa tài liệu "${doc.name || doc.fileName || "file"}"`,
+        });
         res.json({ success: true, message: "Đã xóa tài liệu" });
     } catch (error) {
         res.status(400).json({ success: false, message: error.message });

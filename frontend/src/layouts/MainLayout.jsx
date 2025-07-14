@@ -78,9 +78,9 @@ export default function MainLayout({ children }) {
         };
     }, []);
 
-    // Lọc menu cho member
+    // Lọc menu cho member và manager
     const filteredNavigation =
-        currentUser?.role === "member"
+        currentUser?.role === "member" || currentUser?.role === "manager"
             ? navigation.filter(
                   (item) => item.name !== "Users" && item.name !== "Departments"
               )

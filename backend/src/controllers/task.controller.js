@@ -1,5 +1,6 @@
 const TaskService = require("../services/task.service");
 const Comment = require("../models/Comment");
+const { logActivity } = require("../services/projectActivity.service");
 
 class TaskController {
     static async createTask(req, res) {
@@ -7,6 +8,13 @@ class TaskController {
             const task = await TaskService.createTask({
                 ...req.body,
                 assignedTo: req.body.assignedTo || req.user._id,
+            });
+            // Ghi log activity
+            await logActivity({
+                project: task.project,
+                user: req.user._id,
+                action: "create_task",
+                detail: `Tạo task "${task.title}"`,
             });
             res.status(201).json({
                 success: true,
@@ -65,6 +73,13 @@ class TaskController {
                 req.params.id,
                 req.body
             );
+            // Ghi log activity
+            await logActivity({
+                project: updatedTask.project,
+                user: req.user._id,
+                action: "update_task",
+                detail: `Cập nhật task "${updatedTask.title}"`,
+            });
             res.json({
                 success: true,
                 message: "Cập nhật task thành công!",
@@ -134,6 +149,13 @@ class TaskController {
                     .status(404)
                     .json({ success: false, message: "Task not found" });
             }
+            // Ghi log activity
+            await logActivity({
+                project: task.project,
+                user: req.user._id,
+                action: "delete_task",
+                detail: `Xóa task "${task.title}"`,
+            });
             res.json({ success: true, message: "Xóa task thành công!" });
         } catch (error) {
             res.status(500).json({ success: false, message: error.message });

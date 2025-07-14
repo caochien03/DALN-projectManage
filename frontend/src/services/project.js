@@ -114,3 +114,11 @@ export const deleteMilestone = async (projectId, milestoneId) => {
     );
     return response.data;
 };
+
+// Lấy lịch sử thay đổi dự án
+export const getProjectActivity = async (projectId) => {
+    const response = await axiosInstance.get(
+        `/api/projects/${projectId}/activity`
+    );
+    return response.data.data;
+};

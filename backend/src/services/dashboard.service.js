@@ -97,7 +97,7 @@ class DashboardService {
                 },
             };
         } catch (error) {
-            throw new Error(`Error getting dashboard stats: ${error.message}`);
+            throw new Error(`Lỗi khi lấy thống kê dashboard: ${error.message}`);
         }
     }
 

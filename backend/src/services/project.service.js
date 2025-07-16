@@ -112,10 +112,10 @@ class ProjectService {
     static async registerForProject(projectId, userId) {
         const project = await Project.findById(projectId);
         if (!project) {
-            throw new Error("Project not found");
+            throw new Error("Không tìm thấy dự án");
         }
         if (project.status !== "open") {
-            throw new Error("Project is not open for registration");
+            throw new Error("Dự án không mở để đăng ký");
         }
         const user = await User.findById(userId);
         const isEligible = project.departments.some((dept) =>
@@ -130,7 +130,7 @@ class ProjectService {
             project.members.includes(userId) ||
             project.pendingMembers.includes(userId)
         ) {
-            throw new Error("You have already registered for this project");
+            throw new Error("Bạn đã đăng ký tham gia dự án này");
         }
         project.pendingMembers.push(userId);
         await project.save();
@@ -141,13 +141,13 @@ class ProjectService {
     static async approveMember(projectId, userId, managerId) {
         const project = await Project.findById(projectId);
         if (!project) {
-            throw new Error("Project not found");
+            throw new Error("Không tìm thấy dự án");
         }
         if (!project.createdBy.equals(managerId)) {
-            throw new Error("Only project manager can approve members");
+            throw new Error("Chỉ quản lý dự án mới có thể duyệt thành viên");
         }
         if (!project.pendingMembers.includes(userId)) {
-            throw new Error("User is not in the pending list");
+            throw new Error("Người dùng không có trong danh sách chờ duyệt");
         }
         project.pendingMembers = project.pendingMembers.filter(
             (id) => !id.equals(userId)
@@ -171,10 +171,10 @@ class ProjectService {
     static async rejectMember(projectId, userId, managerId) {
         const project = await Project.findById(projectId);
         if (!project) {
-            throw new Error("Project not found");
+            throw new Error("Không tìm thấy dự án");
         }
         if (!project.createdBy.equals(managerId)) {
-            throw new Error("Only project manager can reject members");
+            throw new Error("Chỉ quản lý dự án mới có thể từ chối thành viên");
         }
         if (!project.pendingMembers.includes(userId)) {
             throw new Error("User is not in the pending list");
@@ -190,12 +190,12 @@ class ProjectService {
     static async checkMilestoneConsistency(projectId, milestoneId) {
         const project = await Project.findById(projectId);
         if (!project) {
-            throw new Error("Project not found");
+            throw new Error("Không tìm thấy dự án");
         }
 
         const milestone = project.milestones.id(milestoneId);
         if (!milestone) {
-            throw new Error("Milestone not found");
+            throw new Error("Không tìm thấy mốc (milestone)");
         }
 
         if (milestone.status === "completed") {
@@ -234,12 +234,12 @@ class ProjectService {
     static async completeMilestone(projectId, milestoneId, userId) {
         const project = await Project.findById(projectId);
         if (!project) {
-            throw new Error("Project not found");
+            throw new Error("Không tìm thấy dự án");
         }
 
         const milestone = project.milestones.id(milestoneId);
         if (!milestone) {
-            throw new Error("Milestone not found");
+            throw new Error("Không tìm thấy mốc (milestone)");
         }
 
         // Kiểm tra tất cả task trong milestone
@@ -271,7 +271,7 @@ class ProjectService {
     static async completeProject(projectId, userId) {
         const project = await Project.findById(projectId);
         if (!project) {
-            throw new Error("Project not found");
+            throw new Error("Không tìm thấy dự án");
         }
 
         // Kiểm tra tất cả task trong project
@@ -314,7 +314,7 @@ class ProjectService {
     static async createMilestone(projectId, milestoneData) {
         const project = await Project.findById(projectId);
         if (!project) {
-            throw new Error("Project not found");
+            throw new Error("Không tìm thấy dự án");
         }
 
         // Thêm milestone mới vào project
@@ -348,12 +348,12 @@ class ProjectService {
     static async updateMilestone(projectId, milestoneId, updateData) {
         const project = await Project.findById(projectId);
         if (!project) {
-            throw new Error("Project not found");
+            throw new Error("Không tìm thấy dự án");
         }
 
         const milestone = project.milestones.id(milestoneId);
         if (!milestone) {
-            throw new Error("Milestone not found");
+            throw new Error("Không tìm thấy mốc (milestone)");
         }
 
         // Cập nhật thông tin milestone
@@ -375,12 +375,12 @@ class ProjectService {
     static async deleteMilestone(projectId, milestoneId) {
         const project = await Project.findById(projectId);
         if (!project) {
-            throw new Error("Project not found");
+            throw new Error("Không tìm thấy dự án");
         }
 
         const milestone = project.milestones.id(milestoneId);
         if (!milestone) {
-            throw new Error("Milestone not found");
+            throw new Error("Không tìm thấy mốc (milestone)");
         }
 
         // Kiểm tra xem có task nào đang sử dụng milestone này không

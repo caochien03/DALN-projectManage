@@ -6,20 +6,20 @@ const auth = async (req, res, next) => {
         const authHeader = req.header("Authorization");
 
         if (!authHeader) {
-            throw new Error("No authorization header");
+            throw new Error("Không có header xác thực");
         }
 
         const token = authHeader.replace("Bearer ", "");
 
         if (!token) {
-            throw new Error("No token provided");
+            throw new Error("Không có token xác thực");
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await User.findOne({ _id: decoded.userId });
 
         if (!user) {
-            throw new Error("User not found");
+            throw new Error("Không tìm thấy người dùng");
         }
 
         req.token = token;

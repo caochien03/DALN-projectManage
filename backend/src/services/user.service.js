@@ -17,7 +17,7 @@ class UserService {
     static async updateUser(id, updateData) {
         const user = await User.findById(id);
         if (!user) {
-            throw new Error("User not found");
+            throw new Error("Không tìm thấy người dùng");
         }
 
         Object.assign(user, updateData);
@@ -36,7 +36,7 @@ class UserService {
         // Xóa user
         const user = await User.findByIdAndDelete(id);
         if (!user) {
-            throw new Error("User not found");
+            throw new Error("Không tìm thấy người dùng");
         }
         return user;
     }
@@ -53,7 +53,7 @@ class UserService {
     static async getUserById(id) {
         const user = await User.findById(id).select("-password");
         if (!user) {
-            throw new Error("User not found");
+            throw new Error("Không tìm thấy người dùng");
         }
         return user;
     }
@@ -104,7 +104,7 @@ class UserService {
             "notifications.relatedTo"
         );
         if (!user) {
-            throw new Error("User not found");
+            throw new Error("Không tìm thấy người dùng");
         }
         return user.notifications;
     }
@@ -113,12 +113,12 @@ class UserService {
     static async markNotificationAsRead(userId, notificationId) {
         const user = await User.findById(userId);
         if (!user) {
-            throw new Error("User not found");
+            throw new Error("Không tìm thấy người dùng");
         }
 
         const notification = user.notifications.id(notificationId);
         if (!notification) {
-            throw new Error("Notification not found");
+            throw new Error("Không tìm thấy thông báo");
         }
 
         notification.read = true;
@@ -136,7 +136,7 @@ class UserService {
             },
         });
         if (!user) {
-            throw new Error("User not found");
+            throw new Error("Không tìm thấy người dùng");
         }
         return user.tasks;
     }
@@ -154,7 +154,7 @@ class UserService {
         }).populate("department", "name");
 
         if (!projects) {
-            throw new Error("User not found");
+            throw new Error("Không tìm thấy người dùng");
         }
         return projects;
     }
@@ -163,7 +163,7 @@ class UserService {
     static async uploadAvatar(userId, avatarPath) {
         const user = await User.findById(userId);
         if (!user) {
-            throw new Error("User not found");
+            throw new Error("Không tìm thấy người dùng");
         }
 
         user.avatar = avatarPath;

@@ -70,7 +70,7 @@ const sendPasswordResetEmail = async (email, resetToken) => {
                 "Email authentication failed. Please check your email credentials in .env file"
             );
         } else if (error.message.includes("Invalid recipient")) {
-            throw new Error("Invalid email address");
+            throw new Error("Địa chỉ email không hợp lệ");
         } else {
             throw new Error(
                 "Failed to send reset email. Please try again later."

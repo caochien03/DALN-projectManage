@@ -9,12 +9,12 @@ class AuthService {
         const user = await User.findOne({ email });
 
         if (!user) {
-            throw new Error("Invalid credentials");
+            throw new Error("Email hoặc mật khẩu không đúng");
         }
 
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
-            throw new Error("Invalid credentials");
+            throw new Error("Email hoặc mật khẩu không đúng");
         }
 
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
@@ -43,7 +43,7 @@ class AuthService {
 
         let user = await User.findOne({ email });
         if (user) {
-            throw new Error("User already exists");
+            throw new Error("Người dùng đã tồn tại");
         }
 
         user = new User({
@@ -84,7 +84,7 @@ class AuthService {
             .populate("tasks", "title");
 
         if (!user) {
-            throw new Error("User not found");
+            throw new Error("Không tìm thấy người dùng");
         }
 
         return user;
@@ -96,14 +96,14 @@ class AuthService {
         const user = await User.findById(userId);
 
         if (!user) {
-            throw new Error("User not found");
+            throw new Error("Không tìm thấy người dùng");
         }
 
         // Check if email is being changed and if it's already taken
         if (email && email !== user.email) {
             const existingUser = await User.findOne({ email });
             if (existingUser) {
-                throw new Error("Email already in use");
+                throw new Error("Email đã được sử dụng");
             }
         }
 
@@ -133,12 +133,12 @@ class AuthService {
         const user = await User.findById(userId);
 
         if (!user) {
-            throw new Error("User not found");
+            throw new Error("Không tìm thấy người dùng");
         }
 
         const isMatch = await user.comparePassword(currentPassword);
         if (!isMatch) {
-            throw new Error("Current password is incorrect");
+            throw new Error("Mật khẩu hiện tại không đúng");
         }
 
         user.password = newPassword;
@@ -152,7 +152,7 @@ class AuthService {
         const user = await User.findOne({ email });
 
         if (!user) {
-            throw new Error("User not found");
+            throw new Error("Không tìm thấy người dùng");
         }
 
         // Generate reset token
@@ -175,7 +175,7 @@ class AuthService {
         });
 
         if (!user) {
-            throw new Error("Invalid or expired reset token");
+            throw new Error("Mã đặt lại mật khẩu không hợp lệ hoặc đã hết hạn");
         }
 
         user.password = newPassword;

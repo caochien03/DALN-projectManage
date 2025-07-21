@@ -44,11 +44,15 @@ class ProjectController {
                     .status(404)
                     .json({ success: false, message: "Project not found" });
             }
-            // Kiểm tra quyền: chỉ cho phép nếu user là thành viên của project hoặc là admin
+            // Kiểm tra quyền: chỉ cho phép nếu user là thành viên của project, là admin hoặc là manager của dự án
             const isMember = project.members.some(
                 (m) => m.user && m.user._id && m.user._id.equals(req.user._id)
             );
-            if (!isMember && req.user.role !== "admin") {
+            const isManager =
+                project.manager &&
+                project.manager._id &&
+                project.manager._id.equals(req.user._id);
+            if (!isMember && req.user.role !== "admin" && !isManager) {
                 return res.status(403).json({
                     success: false,
                     message: "Bạn không có quyền truy cập dự án này",

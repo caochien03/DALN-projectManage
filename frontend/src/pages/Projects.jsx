@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
     getAllProjects,
@@ -52,12 +52,21 @@ export default function Projects() {
     const [pendingDepartment, setPendingDepartment] = useState("");
 
     const navigate = useNavigate();
+    const location = useLocation();
 
     useEffect(() => {
         fetchProjects();
         fetchDepartments();
         fetchUsers();
     }, []);
+
+    // Khi pathname là /projects hoặc / thì fetch lại
+    useEffect(() => {
+        if (location.pathname === "/projects" || location.pathname === "/") {
+            fetchProjects();
+        }
+        // eslint-disable-next-line
+    }, [location.pathname]);
 
     // Fetch projects with filters
     const fetchProjects = async () => {

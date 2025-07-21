@@ -40,7 +40,8 @@ class ProjectService {
         return Project.findById(id)
             .populate("createdBy", "name email")
             .populate("members.user", "name email position")
-            .populate("tasks");
+            .populate("tasks")
+            .populate("manager", "name email position");
     }
 
     static async updateProject(id, updates) {

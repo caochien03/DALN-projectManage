@@ -54,7 +54,7 @@ export default function App() {
                             element={
                                 <PrivateRoute>
                                     <MainLayout>
-                                        <Projects />
+                                        <Dashboard />
                                     </MainLayout>
                                 </PrivateRoute>
                             }

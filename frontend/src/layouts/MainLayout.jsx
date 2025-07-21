@@ -13,8 +13,8 @@ import NotificationBell from "../components/NotificationBell";
 import { useState, useRef, useEffect } from "react";
 
 const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
-    { name: "Projects", href: "/", icon: ClipboardDocumentListIcon },
+    { name: "Dashboard", href: "/", icon: HomeIcon },
+    { name: "Projects", href: "/projects", icon: ClipboardDocumentListIcon },
     { name: "Users", href: "/users", icon: UsersIcon },
     { name: "Departments", href: "/departments", icon: BuildingOfficeIcon },
     { name: "Profile", href: "/profile", icon: UsersIcon },
